@@ -1,67 +1,95 @@
 /*
  * tcc_runner.js - WASM loader for the placeholder wrapper module
- * Behavior:
- *  - 如果存在由 emcc 生成的 module（例如 dist/tcc_runner.js），则通过 createTccModule() 加载并梳理 API
- *  - 否则退回到友好的错误信息（保持 window.wasmRun 可用且返回 rejected Promise）
- *
- * 预期：构建后会在同目录生成 dist/tcc_runner.js + dist/tcc_runner.wasm（由 build_wasm.sh 输出）
+ * This loader will attempt to load a built Emscripten output at one of the
+ * common locations (relative to the site root). If it fails, it keeps a
+ * friendly `window.wasmRun` that returns a rejected Promise with a clear
+ * error message so the UI can fallback to Wandbox or simulation.
  */
 (function(){
-    // 默认：若未能加载真实模块，则返回 rejected Promise，前端会继续使用 Wandbox 或模拟回退
-    function notReady(code, stdin){
-        return Promise.reject(new Error('WASM 运行器尚未部署（请运行 build_wasm.sh 并将构建产物放到 /projects/compiler/wasm/dist/）'));
-    }
-    })();
-                const s = document.createElement('script'); s.src = entry;
-                s.onload = () => resolve(); s.onerror = () => reject(new Error('加载失败: '+entry));
-                document.head.appendChild(s);
-            });
+    'use strict';
 
-            if (typeof window.createTccModule !== 'function') {
-                console.warn('构建脚本已加载但未检测到 createTccModule() 导出');
+    function makeNotReady(message){
+        return function(code, stdin){
+            return Promise.reject(new Error(message));
+        };
+    }
+
+    // Default not-ready implementation (will be overwritten on success)
+    try { window.wasmRun = makeNotReady('WASM 运行器未部署：未找到可加载的 tcc_runner 模块。请构建并将产物放到 /wasm/dist/'); } catch(e){}
+
+    // Try several candidate paths (absolute and relative) where dist may exist.
+    const candidates = [
+        '/wasm/dist/tcc_runner.js',
+        'wasm/dist/tcc_runner.js',
+        './wasm/dist/tcc_runner.js',
+        '/projects/compiler/wasm/dist/tcc_runner.js'
+    ];
+
+    async function tryLoadScript(entry){
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = entry;
+            s.async = true;
+            s.onload = () => resolve(entry);
+            s.onerror = (err) => reject(new Error('加载失败: ' + entry));
+            document.head.appendChild(s);
+        });
+    }
+
+    async function tryLoadDist(){
+        for (const entry of candidates){
+            try{
+                console.debug('[tcc_runner] 尝试加载', entry);
+                await tryLoadScript(entry);
+                // If the script loaded but didn't expose createTccModule, continue
+                if (typeof window.createTccModule !== 'function'){
+                    console.warn('[tcc_runner] 脚本已加载但未找到 createTccModule() 导出，继续尝试下一个路径');
+                    continue;
+                }
+
+                // Create module instance
+                const moduleInstance = await window.createTccModule();
+                if (!moduleInstance) throw new Error('createTccModule() 返回空实例');
+
+                // Wrap C functions
+                const run_code = moduleInstance.cwrap('run_code', 'number', ['string']);
+                const free_buffer = moduleInstance.cwrap('free_buffer', null, ['number']);
+
+                // Replace window.wasmRun with a working implementation
+                window.wasmRun = function(code, stdin){
+                    return new Promise((resolve, reject) => {
+                        try{
+                            const ptr = run_code(code || '');
+                            if (!ptr) return resolve({ stdout: '', stderr: 'no output', exitCode: 0 });
+                            const out = moduleInstance.UTF8ToString(ptr);
+                            free_buffer(ptr);
+                            resolve({ stdout: out, stderr: '', exitCode: 0 });
+                        }catch(e){
+                            reject(e);
+                        }
+                    });
+                };
+
+                console.info('[tcc_runner] WASM runner 已加载（from ' + entry + '）');
                 return;
+            }catch(e){
+                console.debug('[tcc_runner] 无法从', entry, '加载运行器：', e && e.message);
+                // try next candidate
             }
-
-            // 创建 Module 实例
-            const moduleInstance = await window.createTccModule();
-
-            // 使用 cwrap 将 C API 包装为 JS 函数
-            const run_code = moduleInstance.cwrap('run_code', 'number', ['string']);
-            const free_buffer = moduleInstance.cwrap('free_buffer', null, ['number']);
-
-            // 暴露 window.wasmRun 接口：接受 code, stdin，返回 Promise
-            window.wasmRun = function(code, stdin){
-                return new Promise((resolve, reject) => {
-                    try{
-                        const ptr = run_code(code || '');
-                        if (!ptr) return resolve({ stdout: '', stderr: 'no output', exitCode: 0 });
-                        const out = moduleInstance.UTF8ToString(ptr);
-                        // 释放 C 端内存
-                        free_buffer(ptr);
-                        resolve({ stdout: out, stderr: '', exitCode: 0 });
-                    }catch(e){
-                        reject(e);
-                    }
-                });
-            };
-
-            console.info('WASM runner 已加载并已设置 window.wasmRun');
-        }catch(e){
-            console.warn('未能加载本地 WASM 运行器：', e.message || e);
         }
+
+        // If we exit loop, none succeeded — keep notReady implementation and log
+        console.warn('[tcc_runner] 未能加载任何本地 WASM 运行器；页面将回退到 Wandbox 或本地模拟。要启用 WASM，请构建并将 dist 放到 /wasm/dist/');
+        try { window.wasmRun = makeNotReady('WASM 运行器未部署：请将构建产物放到 /wasm/dist/ 或通过 CI 将其部署到站点。'); } catch(e){}
     }
 
-    // 触发加载（延迟执行，不阻塞页面）
-    try{ window.addEventListener('load', () => { setTimeout(tryLoadDist, 600); }); }catch(e){ tryLoadDist(); }
+    // Attempt to load after page load (non-blocking)
+    try{
+        if (document.readyState === 'complete' || document.readyState === 'interactive'){
+            setTimeout(tryLoadDist, 200);
+        } else {
+            window.addEventListener('load', () => { setTimeout(tryLoadDist, 200); });
+        }
+    }catch(e){ tryLoadDist(); }
 
-})();
-/* tcc_runner.js - placeholder
- * 如果你没有构建 wasm 运行器，这个占位脚本可以避免页面在尝试加载 /projects/compiler/wasm/tcc_runner.js 时抛错。
- * 它会暴露一个简易的 window.wasmRun 接口，调用时返回一个被拒绝的 Promise，提示缺少真实运行器。
- */
-(function(){
-    function notReady(code, stdin){
-        return Promise.reject(new Error('WASM 运行器未部署：请将真实的 tcc/clang wasm 运行器上传到 /projects/compiler/wasm/ 并替换本文件'));
-    }
-    try{ window.wasmRun = notReady; }catch(e){}
 })();

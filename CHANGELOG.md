@@ -107,3 +107,10 @@ All notable changes to this project will be documented in this file.
 
 ### Notes
 - 版本号展示已更新为 `1.1.12+0.0.1`（`index.html`）；该 workflow 为示例级构建流程，实际将 tcc/clang 编译为 wasm 可能需要更长的 CI 运行时间与额外配置（可根据需要调整）。
+
+## [1.1.13] - 2025-11-04
+### Fixed
+- 修复 WASM loader 的检测与加载逻辑：改进 `wasm/tcc_runner.js`，尝试从常见路径（`/wasm/dist/tcc_runner.js`、`wasm/dist/tcc_runner.js` 等）加载构建产物，并在控制台输出更友好的错误与调试信息；当运行器加载成功时会暴露 `window.wasmRun(code, stdin)`，否则返回带有明确原因的 rejected Promise，页面会回退到 Wandbox 或本地模拟。
+
+### Changed
+- 将页面可见版本提升为 `1.1.13`（在 `index.html` 中显示）。
