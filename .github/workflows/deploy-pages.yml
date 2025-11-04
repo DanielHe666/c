@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
 
@@ -69,12 +69,11 @@ jobs:
           fi
         shell: bash
 
-      - name: Upload artifact for GitHub Pages
-        # Use the latest stable release; update if GitHub releases a newer major.
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy to gh-pages branch (peaceiris)
+        # Use peaceiris to push built site to gh-pages branch directly and avoid
+        # using artifact actions that may internally depend on deprecated versions.
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          # Upload repository root (includes wasm/dist if build produced it)
-          path: './'
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
