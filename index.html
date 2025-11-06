@@ -851,7 +851,7 @@ int main() {
             // —— 参赛提交逻辑 ——
             const contestBtn = modal.querySelector('#contestSubmitBtn');
             const contestInput = modal.querySelector('#contestCodeInput');
-            let pendingContestCode = null;
+            let pendingContestCode = null; let pendingWin = null;
             function validContestCode(code){ return /^week-\d+$/i.test(code.trim()); }
             function buildContestPayload(code){
                 const profileRaw = localStorage.getItem('contest_profile');
@@ -863,16 +863,25 @@ int main() {
                 const bytes = new TextEncoder().encode(source).length;
                 return { type:'contest', version:1, challenge:code, handle, github, email, bytes, ts:new Date().toISOString(), code:source };
             }
-            function performContestSubmit(code){
+            function performContestSubmit(code, winRef){
+                const statusEl = document.getElementById('contestJudgeStatus');
                 const payload = buildContestPayload(code);
                 try{
                     const b64 = encodeBase64(JSON.stringify(payload));
                     const url = 'competition/submit.html#submission=' + b64;
-                    window.open(url, '_blank');
+                    let opened=false;
+                    try{ if(winRef && !winRef.closed){ winRef.location.href = url; opened=true; } }catch(e){ opened=false; }
+                    if(!opened){
+                        const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noreferrer'; a.textContent='打开提交页 / Open Submit Page';
+                        const btn=document.createElement('button'); btn.className='btn'; btn.style.marginLeft='8px'; btn.innerHTML='<i class="fas fa-copy"></i> 复制链接';
+                        btn.addEventListener('click',()=>{ navigator.clipboard.writeText(url).then(()=>{ btn.innerHTML='<i class="fas fa-check"></i> 已复制'; setTimeout(()=>{ btn.innerHTML='<i class="fas fa-copy"></i> 复制链接'; }, 1200); }); });
+                        statusEl.innerHTML='已生成提交链接（如未自动打开，请点击）：';
+                        statusEl.appendChild(a); statusEl.appendChild(btn);
+                    }
                 }catch(e){ alert('Contest submit failed: '+ (e&&e.message)); }
             }
             // ---- 评测与加密新增逻辑 ----
-            async function judgeAndSubmit(challenge){
+            async function judgeAndSubmit(challenge, winRef){
                 const statusEl = document.getElementById('contestJudgeStatus');
                 if(!window.editor){ alert('编辑器尚未就绪'); return; }
                 const source = window.editor.getValue();
@@ -886,7 +895,7 @@ int main() {
                     }catch(e){ /* ignore */ }
                     if(!Array.isArray(tests) || !tests.length){ tests=[1,3,5].map(n=>({stdin:String(n)+'\n', expected: genDiamond(n)})); }
                 }
-                if(!tests.length){ statusEl.textContent='未知题目，跳过评测 / Unknown challenge, skip judge.'; return performContestSubmit(challenge); }
+                if(!tests.length){ statusEl.textContent='未知题目，跳过评测 / Unknown challenge, skip judge.'; return performContestSubmit(challenge, winRef); }
                 let allPass=true;
                 for(const tc of tests){
                     try{
@@ -896,13 +905,23 @@ int main() {
                         if(out!==expect){ allPass=false; break; }
                     }catch(e){ allPass=false; break; }
                 }
-                if(!allPass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，阻止上传 / Wrong Answer blocked.'; return; }
+                if(!allPass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，阻止上传 / Wrong Answer blocked.'; try{ if(winRef && !winRef.closed) winRef.close(); }catch(e){} return; }
                 statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted，生成提交数据...';
                 const encPayload = secureContestPayload(challenge, source);
                 try{
                     const b64 = encodeBase64(JSON.stringify(encPayload));
                     const url = 'competition/submit.html#submission=' + b64;
-                    window.open(url, '_blank');
+                    let opened=false;
+                    try{
+                        if(winRef && !winRef.closed){ winRef.location.href = url; opened=true; }
+                    }catch(e){ opened=false; }
+                    if(!opened){
+                        const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noreferrer'; a.textContent='打开提交页 / Open Submit Page';
+                        const btn=document.createElement('button'); btn.className='btn'; btn.style.marginLeft='8px'; btn.innerHTML='<i class="fas fa-copy"></i> 复制链接';
+                        btn.addEventListener('click',()=>{ navigator.clipboard.writeText(url).then(()=>{ btn.innerHTML='<i class="fas fa-check"></i> 已复制'; setTimeout(()=>{ btn.innerHTML='<i class="fas fa-copy"></i> 复制链接'; }, 1200); }); });
+                        statusEl.innerHTML='已生成提交链接（如未自动打开，请点击）：';
+                        statusEl.appendChild(a); statusEl.appendChild(btn);
+                    }
                 }catch(e){ alert('提交生成失败: '+(e&&e.message)); }
             }
             function secureContestPayload(challenge, source){
@@ -920,7 +939,9 @@ int main() {
             }
             window.addEventListener('message', (ev)=>{
                 if(ev && ev.data && ev.data.type==='contest_profile_saved' && pendingContestCode){
-                    setTimeout(()=>judgeAndSubmit(pendingContestCode), 150);
+                    const code = pendingContestCode; pendingContestCode = null;
+                    const winRef = pendingWin; pendingWin = null;
+                    setTimeout(()=>judgeAndSubmit(code, winRef), 150);
                 }
             }, { once:false });
             contestBtn.onclick = ()=>{
@@ -928,11 +949,12 @@ int main() {
                 if(!validContestCode(code)){ alert(t('contest_invalid_code')); return; }
                 const profileRaw = localStorage.getItem('contest_profile');
                 if(!profileRaw){
-                    pendingContestCode = code;
+                    pendingContestCode = code; try{ pendingWin = window.open('about:blank'); }catch(e){ pendingWin = null; }
                     alert(t('contest_first_info'));
                     window.open('DataCollect.html', 'contestProfile', 'width=520,height=600');
                 }else{
-                    judgeAndSubmit(code);
+                    let winRef=null; try{ winRef = window.open('about:blank'); }catch(e){ winRef = null; }
+                    judgeAndSubmit(code, winRef);
                 }
             };
             document.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ close(); document.removeEventListener('keydown', esc);} });
