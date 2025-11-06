@@ -53,7 +53,8 @@
     body{background:var(--bg);color:var(--muted);transition:background-color .45s ease,color .45s ease}
 
         /* 应用容器：占满整个视口，类似本地 app 的全屏编辑器 */
-        .app{height:100vh;width:100vw;display:flex;flex-direction:column;align-items:stretch;justify-content:stretch}
+    /* 使用动态视口高度，解决移动端地址栏折叠导致 100vh 计算不准出现黑块与编辑器极小问题 */
+    .app{height:100dvh;height:calc(var(--app-vh, 100vh));width:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:stretch}
     .frame{max-width:1400px;margin:12px auto;flex:1;background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:background-color .45s ease,box-shadow .45s ease;min-height:0;width:100%}
 
     header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);transition:background-color .45s ease}
@@ -137,7 +138,7 @@
             <div class="meta">
                 <a id="contestLink" href="./competition/index.html" title="赛事 / Contest"><i class="fas fa-flag-checkered"></i> 赛事</a>
                 <span class="badge" id="netBadge" title="网络状态">在线</span>
-                <span class="badge" id="verBadge" title="版本">v1.3.4 / c0.0.1</span>
+                <span class="badge" id="verBadge" title="版本">v1.3.4</span>
             </div>
         </header>
 
@@ -192,7 +193,7 @@
             <button class="btn ghost" id="redoBtn" title="重做" disabled><i class="fas fa-redo"></i></button>
             <button class="btn ghost" id="fsBtn"><i class="fas fa-expand"></i> 全屏</button>
             <a id="introLink" href="./about.html" target="_blank" style="margin-left:auto;color:var(--muted);font-size:12px;text-decoration:none"><i class="fas fa-circle-info"></i> 简介与帮助</a>
-            <a id="versionLink" href="javascript:void(0)" style="color:var(--muted);font-size:12px;text-decoration:none;padding-left:12px">By C. He from ZJU | <span id="footerEditorVersion">v1.3.4</span> <span id="footerContestVersion" style="opacity:.85;padding-left:6px">• c0.0.1</span></a>
+            <a id="versionLink" href="javascript:void(0)" style="color:var(--muted);font-size:12px;text-decoration:none;padding-left:12px">By C. He from ZJU | <span id="footerEditorVersion">v1.3.4</span></a>
         </div>
         </div>
     </div>
@@ -211,6 +212,15 @@
     </div>
 
     <script>
+        // 修复移动端 100vh 计算：设置 --app-vh 为 window.innerHeight 的像素值
+        (function(){
+            function setVh(){
+                try{ document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px'); }catch(e){}
+            }
+            setVh();
+            window.addEventListener('resize', setVh);
+            window.addEventListener('orientationchange', setVh);
+        })();
         /**********************************************************************
          * 简洁版脚本：功能
          * - 初始化 Monaco 编辑器
@@ -1172,9 +1182,10 @@ int main() {
                 try{
                     if(window.__VERSION__){
                         var vb=document.getElementById('verBadge');
-                        if(vb){ vb.textContent = window.__VERSION__.editor + ' / ' + window.__VERSION__.competition; }
+                        if(vb){ vb.textContent = window.__VERSION__.editor; }
                         var fev=document.getElementById('footerEditorVersion'); if(fev) fev.textContent = window.__VERSION__.editor;
-                        var fcv=document.getElementById('footerContestVersion'); if(fcv) fcv.textContent = '• ' + window.__VERSION__.competition;
+                        // 竞赛版本在编译器主界面不再显示
+                        var fcv=document.getElementById('footerContestVersion'); if(fcv) fcv.remove();
                     }
                 }catch(e){}
             }catch(e){}
