@@ -640,6 +640,7 @@ int main() {
                 online:'在线', offline:'离线模式', run_title_on:'运行 (Ctrl/Cmd+Enter)', run_title_off:'离线：请连接网络后再运行', io_toggle:'输入/输出', hide_io:'隐藏 I/O',
                 cases_empty:'暂无用例，点击 + 新建。', case_name:'用例', delete:'删除',
                 share_title:'生成分享链接', share_desc:'可选择包含以下内容以便对方完整复现：', include_stdin:'包含输入 (stdin)', include_cases:'包含测试用例',
+                contest:'参赛', contest_desc:'参与每周挑战：输入题目编码（例如 week-1），生成参赛提交数据。首次将弹出信息登记。', contest_code_placeholder:'题目编码，如 week-1', contest_submit:'参赛提交', contest_first_info:'首次参赛，请填写信息后自动继续提交...', contest_profile_copied:'参赛提交信息已复制，请按比赛 README 发起 PR。', contest_invalid_code:'题目编码不正确，请检查。',
                 offline_title:'离线不可运行', offline_desc:'当前处于离线状态，暂不进行本地模拟运行，以避免结果不一致。请恢复网络后再点击“运行”。测试用例批量/单个运行也需要网络。', ok:'知道了',
                 metrics_title:'代码复杂度与度量', metrics_desc:'实时分析当前编辑器内容，帮助了解规模与潜在复杂度。复杂度为近似估算（启发式），非精确解析。', metrics_refresh:'刷新度量', metrics_copy:'复制报告', metrics_copied:'已复制', metrics_placeholder:'(点击“刷新度量”或编辑代码后查看)',
                 save_as:'另存为', theme:'主题', theme_light:'明亮', theme_dark:'暗色', stdin_placeholder:'请先输入再点击运行...', stdout_placeholder:'程序输出将显示在这里...', expected_placeholder:'期望输出 (可留空)',
@@ -653,6 +654,7 @@ int main() {
                 online:'Online', offline:'Offline', run_title_on:'Run (Ctrl/Cmd+Enter)', run_title_off:'Offline: connect network to run', io_toggle:'I/O Panel', hide_io:'Hide I/O',
                 cases_empty:'No cases yet, click + to add.', case_name:'Case', delete:'Delete',
                 share_title:'Create Share Link', share_desc:'Select items to include for full reproduction:', include_stdin:'Include stdin', include_cases:'Include test cases',
+                contest:'Contest', contest_desc:'Participate in weekly challenge: enter problem code (e.g. week-1) to generate submission payload. First time will prompt info.', contest_code_placeholder:'Problem code, e.g. week-1', contest_submit:'Submit Contest', contest_first_info:'First time participation: collecting profile then auto submit...', contest_profile_copied:'Contest submission copied. Follow README to open PR.', contest_invalid_code:'Invalid problem code.',
                 offline_title:'Offline - Execution Disabled', offline_desc:'You are offline. To avoid misleading outputs, local simulation is disabled. Please reconnect to run. Test cases also require network.', ok:'Got it',
                 metrics_title:'Code Metrics', metrics_desc:'Analyze the current code for size and potential complexity. Heuristic only, not a precise parser.', metrics_refresh:'Refresh', metrics_copy:'Copy Report', metrics_copied:'Copied', metrics_placeholder:'(Click “Refresh” or edit code to update)',
                 save_as:'Save As', theme:'Theme', theme_light:'Light', theme_dark:'Dark', stdin_placeholder:'Enter stdin (optional), then click Run', stdout_placeholder:'Program output will appear here...', expected_placeholder:'Expected output (optional)',
@@ -806,8 +808,8 @@ int main() {
                 modal.id = 'shareModal';
                 modal.style.position='fixed'; modal.style.inset='0'; modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center'; modal.style.background='rgba(0,0,0,.45)'; modal.style.zIndex='4500';
             }
-            // 依据语言生成内容
-            modal.innerHTML = '<div style="width:min(460px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:14px;box-shadow:0 18px 50px -10px rgba(0,0,0,.55);padding:16px;transform:translateY(12px) scale(.96);opacity:0;transition:.28s var(--anim-enter)"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-weight:600;color:#fff"><i class=\'fas fa-share-nodes\'></i> '+t('share_title')+'</div><button id="shareClose" class="btn ghost"><i class=\'fas fa-xmark\'></i> '+t('ok')+'</button></div><div style="margin-top:12px;color:var(--muted);font-size:13px;line-height:1.7">'+t('share_desc')+'</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;color:var(--muted)"><label style="display:flex;align-items:center;gap:8px"><input id="optStdin" type="checkbox"/> '+t('include_stdin')+'</label><label style="display:flex;align-items:center;gap:8px"><input id="optCases" type="checkbox"/> '+t('include_cases')+'</label></div><div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><button id="shareCopy" class="btn primary" style="background:var(--accent);color:#071022"><i class=\'fas fa-link\'></i> '+t('share_copy')+'</button></div></div>';
+            // 依据语言生成内容（加入参赛选项）
+            modal.innerHTML = '<div style="width:min(520px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:14px;box-shadow:0 18px 50px -10px rgba(0,0,0,.55);padding:16px;transform:translateY(12px) scale(.96);opacity:0;transition:.28s var(--anim-enter)"><div style="display:flex;align-items:center;justify-content:space-between"><div style="font-weight:600;color:#fff"><i class=\'fas fa-share-nodes\'></i> '+t('share_title')+'</div><button id="shareClose" class="btn ghost"><i class=\'fas fa-xmark\'></i> '+t('ok')+'</button></div><div style="margin-top:12px;color:var(--muted);font-size:13px;line-height:1.7">'+t('share_desc')+'</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;color:var(--muted)"><label style="display:flex;align-items:center;gap:8px"><input id="optStdin" type="checkbox"/> '+t('include_stdin')+'</label><label style="display:flex;align-items:center;gap:8px"><input id="optCases" type="checkbox"/> '+t('include_cases')+'</label></div><div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,255,255,0.05);padding-top:10px"><div style="font-weight:600;color:#fff;font-size:13px"><i class=\'fas fa-trophy\'></i> '+t('contest')+'</div><div style="color:var(--muted);font-size:12px;line-height:1.6">'+t('contest_desc')+'</div><input id="contestCodeInput" placeholder="'+t('contest_code_placeholder')+'" style="margin-top:6px;background:#161a1e;border:1px solid #222;border-radius:8px;padding:6px 8px;color:#eee;font-size:12px"/></div><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button id="contestSubmitBtn" class="btn" style="background:#9146ff;color:#fff"><i class=\'fas fa-medal\'></i> '+t('contest_submit')+'</button><button id="shareCopy" class="btn primary" style="background:var(--accent);color:#071022"><i class=\'fas fa-link\'></i> '+t('share_copy')+'</button></div></div>';
                 document.body.appendChild(modal);
             modal.style.display='flex';
             requestAnimationFrame(()=>{ const inner=modal.firstElementChild; inner.style.opacity='1'; inner.style.transform='translateY(0) scale(1)'; });
@@ -823,6 +825,46 @@ int main() {
                     copyBtn.innerHTML = '<i class="fas fa-check"></i> '+t('copied');
                     setTimeout(()=>{ copyBtn.innerHTML = '<i class="fas fa-link"></i> '+t('share_copy'); }, 1200);
                 }).catch(()=>{ prompt('复制失败，请手动复制：', url); });
+            };
+            // —— 参赛提交逻辑 ——
+            const contestBtn = modal.querySelector('#contestSubmitBtn');
+            const contestInput = modal.querySelector('#contestCodeInput');
+            let pendingContestCode = null;
+            function validContestCode(code){ return /^week-\d+$/i.test(code.trim()); }
+            function buildContestPayload(code){
+                const profileRaw = localStorage.getItem('contest_profile');
+                let profile = {}; try{ profile = JSON.parse(profileRaw||'{}'); }catch(e){}
+                const handle = profile.handle || profile.nickname || 'anon';
+                const github = profile.github || '';
+                const email = profile.email || '';
+                const source = window.editor? window.editor.getValue() : '';
+                const bytes = new TextEncoder().encode(source).length;
+                return { type:'contest', version:1, challenge:code, handle, github, email, bytes, ts:new Date().toISOString(), code:source };
+            }
+            function performContestSubmit(code){
+                const payload = buildContestPayload(code);
+                try{
+                    const b64 = encodeBase64(JSON.stringify(payload));
+                    const url = 'competition/submit.html#submission=' + b64;
+                    window.open(url, '_blank');
+                }catch(e){ alert('Contest submit failed: '+ (e&&e.message)); }
+            }
+            window.addEventListener('message', (ev)=>{
+                if(ev && ev.data && ev.data.type==='contest_profile_saved' && pendingContestCode){
+                    setTimeout(()=>performContestSubmit(pendingContestCode), 150);
+                }
+            }, { once:false });
+            contestBtn.onclick = ()=>{
+                const code = (contestInput.value||'').trim();
+                if(!validContestCode(code)){ alert(t('contest_invalid_code')); return; }
+                const profileRaw = localStorage.getItem('contest_profile');
+                if(!profileRaw){
+                    pendingContestCode = code;
+                    alert(t('contest_first_info'));
+                    window.open('DataCollect.html', 'contestProfile', 'width=520,height=600');
+                }else{
+                    performContestSubmit(code);
+                }
             };
             document.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ close(); document.removeEventListener('keydown', esc);} });
         }
