@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="title">总排行榜 · Overall Leaderboard</title>
+  <meta name="theme-color" content="#0b0c0d" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root{ --bg:#0b0c0d; --panel:#0f1113; --muted:#9aa4ad; --text:#e6eef6; --accent:#48a0ff; --radius:12px; }
+    body{margin:0;background:var(--bg);color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial}
+    .wrap{max-width:1040px;margin:0 auto;padding:20px}
+    header{display:flex;align-items:center;gap:10px;justify-content:space-between}
+    header h1{color:#fff;font-size:22px;margin:0;display:flex;align-items:center;gap:8px}
+    a.btn,button.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);background:var(--panel);color:var(--text);cursor:pointer}
+    a.btn.primary,button.btn.primary{background:var(--accent);color:#071022;border:0}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:16px;margin-top:16px}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+    th,td{border:1px solid #222;padding:6px 8px;text-align:left}
+    th{background:#161a1e;color:#fff}
+    .muted{color:#7e8b97}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 id="h1"><i class="fas fa-ranking-star"></i> 总榜 · Overall Leaderboard</h1>
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="../index.html"><i class="fas fa-flag-checkered"></i> 每周挑战 Weekly</a>
+        <a class="btn" href="../../index.html"><i class="fas fa-code"></i> 编辑器 Editor</a>
+        <button id="langBtn" class="btn"><i class="fas fa-globe"></i> EN</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="muted" id="desc">按累计最好成绩（字节数越小越好）进行积分或排名。以下数据来自 competition/data/total.json。</div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th id="th_handle">选手 Handle</th>
+            <th id="th_weeks">参与期数 Weeks</th>
+            <th id="th_best">最好成绩 Best</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="4" class="muted">加载中 Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const i18n={
+      zh:{ title:'总排行榜 · Overall Leaderboard', header:'总榜 · Overall Leaderboard', weekly:'每周挑战 Weekly', editor:'编辑器 Editor',
+        desc:'按累计最好成绩（字节数越小越好）进行积分或排名。以下数据来自 competition/data/total.json。', handle:'选手 Handle', weeks:'参与期数 Weeks', best:'最好成绩 Best', loading:'加载中 Loading…' },
+      en:{ title:'Overall Leaderboard · 总排行榜', header:'Overall Leaderboard · 总榜', weekly:'Weekly 每周挑战', editor:'Editor 编辑器',
+        desc:'Rank by aggregate best results (shorter is better). Data from competition/data/total.json.', handle:'Handle 选手', weeks:'Weeks 参与期数', best:'Best 最好成绩', loading:'Loading 加载中…' }
+    };
+    function getLang(){ try{return localStorage.getItem('ui_lang')||'zh';}catch(e){return 'zh';} }
+    function setLang(l){ try{localStorage.setItem('ui_lang',l);}catch(e){} applyLang(); }
+    function t(k){ const L=getLang(); return (i18n[L]&&i18n[L][k])||i18n.zh[k]||k; }
+    function applyLang(){
+      document.getElementById('title').textContent=t('title');
+      document.getElementById('h1').innerHTML='<i class="fas fa-ranking-star"></i> '+t('header');
+      const btns=document.querySelectorAll('header .row a.btn');
+      btns[0].innerHTML='<i class="fas fa-flag-checkered"></i> '+t('weekly');
+      btns[1].innerHTML='<i class="fas fa-code"></i> '+t('editor');
+      document.getElementById('desc').textContent=t('desc');
+      document.getElementById('th_handle').textContent=t('handle');
+      document.getElementById('th_weeks').textContent=t('weeks');
+      document.getElementById('th_best').textContent=t('best');
+      document.getElementById('langBtn').innerHTML='<i class="fas fa-globe"></i> '+(getLang()==='zh'?'EN':'中');
+    }
+    document.getElementById('langBtn').addEventListener('click',()=>setLang(getLang()==='zh'?'en':'zh'));
+    applyLang();
+
+    async function load(){
+      const tbody=document.getElementById('tbody');
+      try{
+        const res=await fetch('../data/total.json',{cache:'no-store'});
+        const data=await res.json();
+        tbody.innerHTML='';
+        data.ranks.forEach((row,idx)=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td>${idx+1}</td><td>${row.handle}</td><td>${row.weeks||'-'}</td><td>${row.best||'-'}</td>`;
+          tbody.appendChild(tr);
+        });
+        if(!data.ranks||data.ranks.length===0){ tbody.innerHTML=`<tr><td colspan="4" class="muted">${t('loading')}</td></tr>`; }
+      }catch(e){
+        tbody.innerHTML=`<tr><td colspan="4" class="muted">${t('loading')}</td></tr>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
