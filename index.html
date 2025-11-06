@@ -8,6 +8,8 @@
     <!-- 字体图标和 Monaco 加载器 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.js"></script>
+    <!-- 集成 clang-format wasm 版本（自动缩进/格式化 C/C++） -->
+    <script src="https://unpkg.com/@wasm-tool/clang-format@1.7.0/clang-format.js"></script>
 
     <!-- Highlight.js themes (prefetch links; actual enable/disable handled by script) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" id="hljs-theme-dark" disabled>
@@ -435,13 +437,21 @@ int main() {
     try { saveBtn && saveBtn.addEventListener('click', saveCode); } catch (e) {}
     try { resetBtn && resetBtn.addEventListener('click', resetCode); } catch (e) {}
     try { themeBtn && themeBtn.addEventListener('click', toggleTheme); } catch (e) {}
-    // 自动缩进按钮绑定
+    // 自动缩进按钮绑定（集成 clang-format）
     try {
         const formatBtn = document.getElementById('formatBtn');
         if (formatBtn) {
-            formatBtn.addEventListener('click', function() {
-                if (window.editor) {
-                    window.editor.getAction('editor.action.formatDocument').run();
+            formatBtn.addEventListener('click', async function() {
+                if (window.editor && window['clangFormat']) {
+                    const code = window.editor.getValue();
+                    try {
+                        const formatted = await window['clangFormat'](code, 'c');
+                        if (formatted) window.editor.setValue(formatted);
+                    } catch (err) {
+                        alert('格式化失败：' + (err && err.message));
+                    }
+                } else {
+                    alert('Clang-Format 加载中或不可用');
                 }
             });
         }
