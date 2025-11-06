@@ -31,14 +31,22 @@
     </header>
 
     <div class="card">
-  <div id="summary" class="muted">解析提交中…</div>
-  <div id="meta" class="muted" style="margin-top:6px"></div>
+      <div id="summary" class="muted">解析提交中…</div>
+      <div id="meta" class="muted" style="margin-top:6px"></div>
       <div class="row" style="margin-top:8px">
         <button id="copyBtn" class="btn"><i class="fas fa-copy"></i> 复制代码 Copy Code</button>
-        <a id="openGh" class="btn primary" target="_blank" rel="noreferrer"><i class="fas fa-file-circle-plus"></i> 前往 GitHub 新建文件 Create on GitHub</a>
+        <a id="forkBtn" class="btn" target="_blank" rel="noreferrer"><i class="fas fa-code-fork"></i> Fork 仓库 Fork Repo</a>
+        <a id="openGh" class="btn" target="_blank" rel="noreferrer"><i class="fas fa-file-circle-plus"></i> 在 Fork 中建文件 New File in Fork</a>
+        <a id="issueBtn" class="btn primary" target="_blank" rel="noreferrer"><i class="fas fa-exclamation-circle"></i> 备用：Issue 提交 Alt: Issue</a>
       </div>
       <textarea id="code"></textarea>
-      <div class="muted" style="margin-top:8px">提示：点击“前往 GitHub 新建文件”，在打开的页面粘贴代码，提交到 `submissions/week-<n>/<handle>/solution.c`，然后发起 PR。
+      <div class="muted" style="margin-top:8px" id="flowTips">
+        标准流程（推荐 Fork + PR）:<br>
+        1. 点击 Fork（若已 Fork 可忽略）。<br>
+        2. 在你的 Fork 仓库中新建文件路径：<code>submissions/week-&lt;n&gt;/&lt;handle&gt;/solution.c</code> 粘贴代码。<br>
+        3. 发起 Pull Request 回主仓库（DanielHe666/c）。<br>
+        备用流程：无法方便地发 PR 时，可使用 “Issue 提交” 按钮，自动生成包含加密元数据与代码的 Issue；管理员稍后手动归档。<br>
+        提示：此页面仅提供内容，不具备直接写入主仓库权限——参赛者需 Fork 后操作。
       </div>
     </div>
   </div>
@@ -52,14 +60,18 @@
   function parseWeek(code){ const m=code.match(/week-(\d+)/i); return m? parseInt(m[1],10): null; }
   function fromHex(h){ const arr=new Uint8Array(h.length/2); for(let i=0;i<arr.length;i++){ arr[i]=parseInt(h.substr(i*2,2),16); } return arr; }
   function xorBytes(a,b){ const out=new Uint8Array(a.length); for(let i=0;i<a.length;i++){ out[i]=a[i]^b[i%b.length]; } return out; }
-    const OWNER='DanielHe666';
-    const REPO='c';
+  const OWNER='DanielHe666';
+  const REPO='c';
     (function(){
       const h=location.hash||''; if(!h.startsWith('#submission=')){ document.getElementById('summary').textContent='无提交数据 / No submission payload.'; return; }
       try{
         const obj=JSON.parse(decodeBase64(h.slice('#submission='.length))||'{}');
         const week=parseWeek(obj.challenge)||1;
         const handle=(obj.handle||'anon').replace(/[^a-zA-Z0-9_-]/g,'-');
+        // Fork 按钮指向固定仓库 fork 页面
+        const forkUrl=`https://github.com/${OWNER}/${REPO}/fork`;
+        document.getElementById('forkBtn').href=forkUrl;
+        // New File 按钮仍指向主仓库 new 文件页面；GitHub 会在无权限时提示 Fork（可能丢失预填内容），用户可在 Fork 内手动创建
         const path=`submissions/week-${week}/${handle}`;
         const ghNew=`https://github.com/${OWNER}/${REPO}/new/main/${encodeURIComponent(path)}?filename=solution.c`;
         document.getElementById('openGh').href=ghNew;
@@ -72,6 +84,51 @@
             const metaStr = new TextDecoder().decode(metaBytes);
             const meta = JSON.parse(metaStr||'{}');
             document.getElementById('meta').textContent = `校验通过：bytes=${meta.bytes}, handle=${meta.handle}, ts=${meta.ts}`;
+            // 构造 Issue 提交内容
+            const bodyLines = [];
+            bodyLines.push(`# Week ${week} Submission (${handle})`);
+            bodyLines.push('');
+            bodyLines.push(`Challenge: ${obj.challenge}`);
+            bodyLines.push('');
+            bodyLines.push('Encrypted Metadata:');
+            bodyLines.push('```');
+            bodyLines.push(`enc: ${obj.enc}`);
+            bodyLines.push(`key: ${obj.key}`);
+            bodyLines.push(`version: ${obj.version||'2'}`);
+            bodyLines.push(`bytes: ${meta.bytes}`);
+            bodyLines.push(`ts: ${meta.ts}`);
+            bodyLines.push('```');
+            bodyLines.push('');
+            bodyLines.push('Code (C):');
+            bodyLines.push('```c');
+            bodyLines.push(obj.code||'');
+            bodyLines.push('```');
+            bodyLines.push('');
+            bodyLines.push('> 提交说明: 若无法方便地 Fork + PR, 使用该 Issue 方式。管理员会验证并归档到 submissions/ 目录。');
+            let issueBody = bodyLines.join('\n');
+            const issueTitle = `Week-${week} Submission ${handle}`;
+            // URL 长度保护：若编码后超长，则仅携带加密元数据，请在打开的页面手动粘贴代码
+            const encodedBody = encodeURIComponent(issueBody);
+            if(encodedBody.length > 7000){
+              const shortLines = [];
+              shortLines.push(`# Week ${week} Submission (${handle})`);
+              shortLines.push('');
+              shortLines.push(`Challenge: ${obj.challenge}`);
+              shortLines.push('');
+              shortLines.push('Encrypted Metadata:');
+              shortLines.push('```');
+              shortLines.push(`enc: ${obj.enc}`);
+              shortLines.push(`key: ${obj.key}`);
+              shortLines.push(`version: ${obj.version||'2'}`);
+              shortLines.push(`bytes: ${meta.bytes}`);
+              shortLines.push(`ts: ${meta.ts}`);
+              shortLines.push('```');
+              shortLines.push('');
+              shortLines.push('> 代码较长，出于链接长度限制，请在 Issue 页面打开后手动粘贴代码。');
+              issueBody = shortLines.join('\n');
+            }
+            const issueUrl = `https://github.com/${OWNER}/${REPO}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+            document.getElementById('issueBtn').href=issueUrl;
           }
         }catch(e){ document.getElementById('meta').textContent='元数据解析失败（非致命）'; }
         document.getElementById('copyBtn').addEventListener('click',()=>{
