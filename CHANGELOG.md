@@ -4,6 +4,7 @@
 - 移除“一键提交”功能：禁用 `window.__CONFIG__.submitEndpoint` 与公钥配置，取消 Cloudflare Worker 提交路径。
 - 提交流程回归简化模式：评测通过后前端生成 v3 加密 JSON（包含 `enc`/`encCode`/`key`），选手在 Fork 仓库路径 `submissions/week-<n>/<handle>/solution.c` 中粘贴该密文文件并发 PR。
 - 排行榜代码列不再跳转 GitHub，而是指向站点内部 `competition/view.html` 页面，前端自动解析并解密显示源码。
+ - Week 题面采用“两步提交”：AC 前仅显示“评测代码”，AC 后才显示“生成密文”用于粘贴到 fork 的 `solution.c`。
 
 ### Added
 - 新增 `competition/view.html`：可视化解密页面，支持 v3 密文 JSON 解码展示原始源码与基本元数据（handle, challenge, bytes, ts）。
