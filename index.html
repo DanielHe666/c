@@ -911,6 +911,26 @@ int main() {
                 if(!allPass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，阻止上传 / Wrong Answer blocked.'; try{ if(winRef && !winRef.closed) winRef.close(); }catch(e){} return; }
                 statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted，生成提交数据...';
                 const encPayload = secureContestPayload(challenge, source);
+                // 优先尝试一键提交（若配置了服务端）
+                try{
+                    const ep = (window.__CONFIG__ && window.__CONFIG__.submitEndpoint) || '';
+                    if(ep){
+                        statusEl.textContent='通过 | Accepted，正在一键提交...';
+                        const resp = await fetch(ep, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(encPayload), mode:'cors' });
+                        if(resp.ok){
+                            let data={}; try{ data=await resp.json(); }catch(_){ data={}; }
+                            const pr = data.prUrl || data.url || '';
+                            statusEl.innerHTML = '✅ 已提交成功，等待审核入榜。';
+                            if(pr){
+                                const a=document.createElement('a'); a.href=pr; a.target='_blank'; a.rel='noreferrer'; a.textContent='查看 PR / View PR'; a.style.marginLeft='8px';
+                                statusEl.appendChild(a);
+                                try{ if(winRef && !winRef.closed){ winRef.location.href = pr; } }catch(_){ }
+                            }
+                            return; // 一键提交成功则结束
+                        }
+                    }
+                }catch(_){ /* 忽略，回退到手动页 */ }
+                // 回退到手动提交页
                 try{
                     const b64 = encodeBase64(JSON.stringify(encPayload));
                     const url = 'competition/submit.html#submission=' + b64;

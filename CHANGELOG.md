@@ -15,6 +15,7 @@
 - `about.html` 新增赛事说明条目（contest5）：解释非协作者需 Fork + PR，Issue 为备用方案。
 - PR 自动合并：新增 `validate-submission.yml` 的自动合并步骤。验证通过且目标分支为 `main` 且未打上 `hold`/`no-auto-merge` 标签时，机器人将尝试以 squash 方式自动合并；若因受保护分支策略或审查要求无法自动合并，会在 PR 下方留言说明原因并保留 `ready` 标签以便人工处理。
  - 反匿名校验：工作流拒绝 `submissions/week-*/anon/` 形式的匿名路径，提示选手把 `<handle>` 改为个人标识，避免榜单出现 `anon`。
+ - 一键提交（可选）：在 `scripts/version.js` 中配置 `window.__CONFIG__.submitEndpoint` 后，评测通过将直接向该地址 POST 提交数据（无需 GitHub 账号）；成功时返回 PR 链接并展示。新增 `serverless/cloudflare-worker.js` 示例与 `serverless/README.md` 部署说明。
 
 ### Notes
 - 后续可进一步：在提交页增加 PR 模板引导、Issue 自动标签；增强加密（AES-GCM）、添加元数据哈希以防篡改。
