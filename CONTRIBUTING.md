@@ -25,6 +25,12 @@ Thanks for collaborating on this project! Below is a pragmatic workflow we follo
   - Submissions are stored under `submissions/week-<n>/<handle>/solution.c`.
   - We now store encrypted JSON (v3) as file content. The leaderboard script decrypts content to compute byte length.
   - Do NOT manually edit participants’ submission files unless performing a mechanical/admin task.
+  - Two-step submission (Week pages):
+    1. "评测代码" (judge) must pass all test cases before any payload button appears.
+    2. After AC, a "生成密文" button reveals and produces the v3 encrypted JSON (fields: `type, version, challenge, enc, encCode, key`).
+    3. Participant copies that JSON verbatim into `solution.c` (overwrite old content) and opens a PR.
+    4. Re-submission = overwrite same file/path; do not create additional files or directories.
+  - The internal viewer `competition/view.html` loads and decrypts v3 JSON for code display; external GitHub browsing shows only the encrypted blob.
 - Ranking scripts:
   - `scripts/compute_ranks.mjs` generates `competition/data/week-*.json` and `total.json`.
   - It detects v3 encrypted files and decrypts to compute original bytes.

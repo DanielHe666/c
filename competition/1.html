@@ -74,7 +74,8 @@
       </div>
       <textarea id="codeInput" placeholder="在此粘贴你的 C 代码..." style="width:100%;min-height:240px;background:#161a1e;border:1px solid #222;border-radius:8px;color:#e6eef6;padding:10px 12px;font-family:Menlo,monospace;font-size:13px"></textarea>
       <div class="row" style="margin-top:8px;gap:10px;flex-wrap:wrap">
-  <button id="judgeSubmitBtn" class="btn primary"><i class="fas fa-medal"></i> 评测并生成密文</button>
+  <button id="judgeBtn" class="btn primary"><i class="fas fa-vial"></i> 评测代码</button>
+  <button id="genPayloadBtn" class="btn" style="display:none;background:#2ea043;border:0;color:#071022"><i class="fas fa-shield-halved"></i> 生成密文</button>
         <a class="btn" href="./rank/1.html" target="_blank" rel="noreferrer"><i class="fas fa-medal"></i> 查看第1期排行榜</a>
   <a class="btn" href="./submit.html" target="_blank" rel="noreferrer"><i class="fas fa-share-from-square"></i> 提交页（粘贴密文）</a>
       </div>
@@ -224,7 +225,8 @@
       const handleInput = document.getElementById('handleInput');
       const saveHandleBtn = document.getElementById('saveHandleBtn');
       const codeInput = document.getElementById('codeInput');
-      const judgeBtn = document.getElementById('judgeSubmitBtn');
+      const judgeBtn = document.getElementById('judgeBtn');
+      const genBtn = document.getElementById('genPayloadBtn');
       const statusEl = document.getElementById('submitStatus');
       // 预填 handle
       try{ const h = window.__ContestSubmit.getHandle(); if(h) handleInput.value = h; }catch(e){}
@@ -265,22 +267,31 @@
         const source = codeInput.value||'';
         if(!source.trim()){ alert('请粘贴代码'); return; }
         statusEl.style.color=''; statusEl.textContent='评测中 / Judging...';
+        genBtn.style.display='none';
         try{
           const pass = await judgeWeek1(source);
-          if(!pass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，已阻止提交。'; return; }
-        }catch(e){ statusEl.style.color='#ffb020'; statusEl.textContent='评测失败（网络/服务异常），请稍后再试。'; return; }
-        statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted，打包提交...';
+          if(!pass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，未通过。'; return; }
+          statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted。现在可生成密文。';
+          genBtn.style.display='inline-flex';
+          genBtn.focus();
+        }catch(e){ statusEl.style.color='#ffb020'; statusEl.textContent='评测失败（网络/服务异常），请稍后再试。'; }
+      });
+
+      genBtn.addEventListener('click', async ()=>{
+        const source = codeInput.value||'';
+        if(!source.trim()){ alert('代码为空'); return; }
+        genBtn.disabled=true; const old=genBtn.innerHTML; genBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> 生成中';
+        statusEl.style.color=''; statusEl.textContent='生成密文中...';
         try{
           const payload = await window.__ContestSubmit.buildPayload('week-1', source);
-          // 强制使用 v3（配置已禁用公钥与端点），构造 slim JSON 供粘贴
           const slim = payload.version===3 ? { type:'contest', version:3, challenge: payload.challenge, enc: payload.enc, encCode: payload.encCode, key: payload.key } : payload;
           const jsonStr = JSON.stringify(slim, null, 2);
-          // 打包并在页面显示复制链接（跳转提交页）
           const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
           const url = './submit.html#submission='+b64;
-          statusEl.innerHTML='✅ 通过 | Accepted。<br>1) 点击下方“提交页”打开。<br>2) 在新建文件中粘贴以下密文 JSON 并保存：<br><pre style="background:#161a1e;padding:10px;border-radius:8px;overflow:auto;font-size:12px"><code>'+jsonStr.replace(/[&<>]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))+'</code></pre>';
+          statusEl.innerHTML='✅ 已生成密文。<br>1) 打开提交页。<br>2) 在 Fork 里新建/覆盖 solution.c 粘贴下列 JSON：<br><pre style="background:#161a1e;padding:10px;border-radius:8px;overflow:auto;font-size:12px"><code>'+jsonStr.replace(/[&<>]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))+'</code></pre>';
           const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noreferrer'; a.textContent='打开提交页（新标签）'; a.className='btn'; a.style.marginTop='8px'; statusEl.appendChild(a);
         }catch(e){ statusEl.style.color='#ff6b6b'; statusEl.textContent='生成密文失败：'+(e&&e.message||e); }
+        finally{ genBtn.disabled=false; genBtn.innerHTML=old; }
       });
     })();
   </script>

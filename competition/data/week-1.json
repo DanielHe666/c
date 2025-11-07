@@ -2,7 +2,7 @@
   "repo": "ChenyuHeee/c",
   "week": 1,
   "branch": "main",
-  "updatedAt": "2025-11-07T14:29:37.468Z",
+  "updatedAt": "2025-11-07T14:52:47.980Z",
   "ranks": [
     {
       "handle": "我要拿冠军",
@@ -24,6 +24,13 @@
       "commitTime": "2025-11-07T16:14:47+08:00",
       "sha": "0393cce3dc67c2ea09207e5c2aa5f80d53b0a8ad",
       "path": "submissions/week-1/Jackthin/solution.c"
+    },
+    {
+      "handle": "hehehe",
+      "bytes": 425,
+      "commitTime": "2025-11-07T22:48:25+08:00",
+      "sha": "8a3a8b10a5b4269679dde01902d1b66c040d3b07",
+      "path": "submissions/week-1/hehehe/solution.c"
     },
     {
       "handle": "He Chenyu",
