@@ -2,8 +2,15 @@
   "repo": "ChenyuHeee/c",
   "week": 1,
   "branch": "main",
-  "updatedAt": "2025-11-07T11:05:33.862Z",
+  "updatedAt": "2025-11-07T11:09:25.414Z",
   "ranks": [
+    {
+      "handle": "JackthinTest",
+      "bytes": 393,
+      "commitTime": "2025-11-07T19:09:06+08:00",
+      "sha": "55f9e6faeca862e13cba54fff402853eebc6dcdd",
+      "path": "submissions/week-1/JackthinTest/solution.c"
+    },
     {
       "handle": "Jackthin",
       "bytes": 399,
