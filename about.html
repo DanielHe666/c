@@ -60,8 +60,7 @@
     <div id="versions" class="section">
       <h2 id="versionTitle"><i class="fas fa-code-branch"></i> 版本信息</h2>
       <ul class="list">
-  <li id="editorVersionItem"><span id="editorVersionLabel">编辑器版本</span>：<b id="editorVersionValue">v1.3.5</b></li>
-        <li id="competitionVersionItem"><span id="competitionVersionLabel">赛事系统版本</span>：<b id="competitionVersionValue">c0.0.1</b></li>
+        <li id="projectVersionItem"><span id="projectVersionLabel">项目版本</span>：<b id="projectVersionValue">v1.3.7</b></li>
       </ul>
     </div>
 
@@ -171,8 +170,7 @@
           if(window.__VERSION__){
             var v=window.__VERSION__;
             // 如 i18n 已准备则覆盖显示值；否则稍后 applyLang 会继续设置
-            var ev=document.getElementById('editorVersionValue'); if(ev) ev.textContent=v.editor;
-            var cv=document.getElementById('competitionVersionValue'); if(cv) cv.textContent=v.competition;
+            var pv=document.getElementById('projectVersionValue'); if(pv) pv.textContent=v.version;
           }
         }catch(e){}
       };
@@ -192,10 +190,11 @@
         helpTitle:'使用帮助', help1:'打开在线编译器，在编辑区域编写 C 代码。', help2:'左侧“输入 (stdin)”填入标准输入（可选）。', help3:'点击“运行”：在线优先 Wandbox；失败回退本地；离线弹窗提示不可运行。', help4:'格式排版用“自动缩进”；复制全部代码用“复制”；下载用“另存为”。', help5:'用“主题”切换明亮/暗色；撤销/重做在可用时自动启用。',
         shortcutTitle:'键盘快捷键', sc1:'运行：Ctrl/Cmd + Enter', sc2:'自动缩进：Ctrl/Cmd + I', sc3:'另存为：Ctrl/Cmd + S', sc4:'切换行注释：Ctrl/Cmd + /', sc5:'命令面板：Ctrl/Cmd + Shift + P（Esc 关闭）',
   shareTitle:'分享与协作', share1:'支持一键分享：代码压缩进链接 (URL hash)，对方打开即还原。', share2:'分享增强：可选包含输入与测试用例，完整复现环境。', share3:'打开分享链接后自动恢复代码及输入/用例。',
-  versionTitle:'版本信息', editorVersionLabel:'编辑器版本', competitionVersionLabel:'赛事系统版本', editorVersionValue:'v1.3.5', competitionVersionValue:'c0.0.1',
+  versionTitle:'版本信息', projectVersionLabel:'项目版本', projectVersionValue:'v1.3.7',
   contestTitle:'每周挑战赛事', contest1:'提供每周挑战题与周榜/总榜页面，纯静态适配 GitHub Pages：competition/index.html、competition/1.html、competition/rank/1.html、competition/rank/index.html。', contest2:'排名规则：按代码字节数升序；若相同，按提交时间先后；总榜按全局最佳与参与期数聚合。', contest3:'提交流程：在分享弹窗选择“参赛”，首次填写参赛信息后，打开提交页复制代码并在 GitHub 新建 submissions/week-<n>/<handle>/solution.c 发起 PR；CI 自动更新 JSON 榜单。', contestEntry:'进入赛事',
   contest4:'系统会在提交前自动评测样例，若输出不匹配显示 WA 阻止上传；通过后对参赛元数据（handle, bytes, ts）做简单加密并生成提交页。',
   contest5:'非协作者请先 Fork 仓库，在 Fork 内按路径新建文件并发起 PR；若不便发 PR，可在提交页使用 “Issue 提交” 备用通道。',
+  contest7:'提交安全：v3 起参赛通过 (AC) 后前端对昵称/字节数/时间与完整代码做不可见加密并仅提交密文；落地页不再展示明文，防随手篡改。后续可升级 AES-GCM+签名以增强完整性。',
   contest6:'若管理员启用“一键提交”（无需 GitHub 账号），评测通过后会直接上传到服务器并由机器人代为创建 PR/入榜。',
         faqTitle:'常见问题（FAQ）', faq1:'Q: 是否支持 C++？ A: 打开 .cpp/.hpp 会启用 C++ 语法高亮；运行暂用 C 编译器。', faq2:'Q: 代码会丢失吗？ A: 保存在 localStorage；建议定期另存为。', faq3:'Q: WASM 运行器可用吗？ A: 预留能力，当前不启用；运行优先 Wandbox。', faq4:'Q: 查看历史更新？ A: 点击底部版本或打开 CHANGELOG.md。',
         sceneTitle:'适用场景', scene1:'课堂/培训演示：免安装、跨平台。', scene2:'题解/算法草稿：快速验证逻辑。', scene3:'示例/文档附代码：一键运行和复制。',
@@ -213,10 +212,11 @@
         helpTitle:'Usage Help', help1:'Open the compiler and write C code.', help2:'Fill left Input (stdin) if needed.', help3:'Click Run: Wandbox first; fallback simulation if online fails; offline shows a warning.', help4:'Use Format for indentation; Copy for all code; Save As to download.', help5:'Use Theme to switch light/dark; undo/redo auto enable when possible.',
         shortcutTitle:'Keyboard Shortcuts', sc1:'Run: Ctrl/Cmd + Enter', sc2:'Format: Ctrl/Cmd + I', sc3:'Save As: Ctrl/Cmd + S', sc4:'Toggle Line Comment: Ctrl/Cmd + /', sc5:'Command Palette: Ctrl/Cmd + Shift + P (Esc close)',
   shareTitle:'Sharing & Collaboration', share1:'One-click share: code compressed into URL hash.', share2:'Enhanced share: optionally include stdin & test cases.', share3:'Opening a share link restores code and inputs/cases.',
-  versionTitle:'Versions', editorVersionLabel:'Editor Version', competitionVersionLabel:'Competition Version', editorVersionValue:'v1.3.5', competitionVersionValue:'c0.0.1',
+  versionTitle:'Versions', projectVersionLabel:'Project Version', projectVersionValue:'v1.3.7',
   contestTitle:'Weekly Challenge', contest1:'Weekly problem and leaderboards, static and Pages-friendly: competition/index.html, competition/1.html, competition/rank/1.html, competition/rank/index.html.', contest2:'Ranking: bytes ascending; tie by earlier submission; overall aggregates best result and participation count.', contest3:'Submission: in Share modal choose "Contest"; on first time fill profile, then open submission page, paste code and create submissions/week-<n>/<handle>/solution.c on GitHub via PR; CI updates JSON.', contestEntry:'Open Competition',
   contest4:'Before submission the system auto-judges sample tests; WA blocks upload. On AC it encrypts metadata (handle, bytes, ts) and opens the submit page.',
   contest5:'For non-collaborators: please Fork first, create the file in your fork and open a PR; if PR is inconvenient, use the “Issue submission” fallback on the submit page.',
+  contest7:'Submission security: since v3 the client encrypts handle/bytes/timestamp and full code after AC, sending only ciphertext; submit page hides plaintext to reduce casual tampering. Future: upgrade to AES-GCM + signature for stronger integrity.',
   contest6:'If the admin enables "One-click Submit" (no GitHub account needed), your AC submission is sent to a server and a bot will create the PR/ranking for you.',
         faqTitle:'FAQ', faq1:'Q: C++ supported? A: Opening .cpp/.hpp enables C++ syntax highlighting; runs currently use C compiler.', faq2:'Q: Will code vanish? A: Stored in localStorage; back up with Save As.', faq3:'Q: WASM runner? A: Reserved capability; Wandbox preferred; fallback simulation.', faq4:'Q: View history? A: Click footer version or open CHANGELOG.md.',
         sceneTitle:'Use Cases', scene1:'Classroom/training demos', scene2:'Algorithm scratch/testing', scene3:'Docs/examples with instant run & copy',
@@ -250,15 +250,11 @@
       document.querySelectorAll('.shareItem').forEach(li=>{ const k=li.getAttribute('data-i18n-key'); li.innerHTML=t(k); });
   // versions
   document.getElementById('versionTitle').innerHTML='<i class="fas fa-code-branch"></i> '+t('versionTitle');
-  document.getElementById('editorVersionLabel').textContent=t('editorVersionLabel');
-  document.getElementById('competitionVersionLabel').textContent=t('competitionVersionLabel');
-  // 若统一版本常量已加载则优先使用它的值，否则回退到 i18n 默认
+  document.getElementById('projectVersionLabel').textContent=t('projectVersionLabel');
   if(window.__VERSION__){
-    document.getElementById('editorVersionValue').textContent=window.__VERSION__.editor;
-    document.getElementById('competitionVersionValue').textContent=window.__VERSION__.competition;
+    document.getElementById('projectVersionValue').textContent=window.__VERSION__.version;
   }else{
-    document.getElementById('editorVersionValue').textContent=t('editorVersionValue');
-    document.getElementById('competitionVersionValue').textContent=t('competitionVersionValue');
+    document.getElementById('projectVersionValue').textContent=t('projectVersionValue');
   }
   // contest
   document.getElementById('contestTitle').innerHTML='<i class="fas fa-flag-checkered"></i> '+t('contestTitle');
@@ -276,6 +272,12 @@
   if(!has5){
     const ul=document.querySelector('#contest ul.list')||document.querySelector('#contest .list');
     if(ul){ const li=document.createElement('li'); li.className='contestItem'; li.setAttribute('data-i18n-key','contest5'); li.innerHTML=t('contest5'); ul.appendChild(li); }
+  }
+  // append contest7 if not present
+  const has7 = Array.from(document.querySelectorAll('#contest .contestItem')).some(li=>li.getAttribute('data-i18n-key')==='contest7');
+  if(!has7){
+    const ul=document.querySelector('#contest ul.list')||document.querySelector('#contest .list');
+    if(ul){ const li=document.createElement('li'); li.className='contestItem'; li.setAttribute('data-i18n-key','contest7'); li.innerHTML=t('contest7'); ul.appendChild(li); }
   }
   // append contest6 only when one-click submit is configured
   const has6 = Array.from(document.querySelectorAll('#contest .contestItem')).some(li=>li.getAttribute('data-i18n-key')==='contest6');

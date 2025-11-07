@@ -1,3 +1,29 @@
+# [1.3.7] - 2025-11-07
+### Added
+- v4 端到端强加密（可选）：前端在配置 `submitPublicKey` 后启用 AES‑GCM（256 位）加密整包（meta+code），随机对称密钥使用 RSA‑OAEP(SHA‑256) 公钥包裹；提交页对 v4 仅展示占位与加密字段，不再尝试解密；Worker 侧新增 `SUBMIT_PRIVATE_KEY` 支持解包与解密，生成 PR。
+- 管理辅助：`scripts/decrypt_submission.mjs` 增强，新增 v4 解密（需要私钥），保留 v2/v3 解析。
+
+### Changed
+- `index.html`：`secureContestPayload` 根据配置自动选择 v4（AES‑GCM + 公钥包裹）或回退 v3（XOR）。评测通过后的一键提交与回退逻辑保持不变。
+- `serverless/cloudflare-worker.js`：兼容 v2/v3/v4；v4 路径校验并限制代码大小（64KB）。
+- `serverless/README.md`：补充 v4 配置说明（前端 `submitPublicKey`，服务端 `SUBMIT_PRIVATE_KEY`）。
+
+### Notes
+- v4 采用经认证的对称加密（GCM 标签）+ 公钥包裹；无需在前端持有任何私钥或共享密钥，前端无法伪造有效密文，服务端可验证与解密；若未配置公钥，系统自动回退至 v3 以维持兼容。
+
+# [1.3.6] - 2025-11-07
+### Changed
+- 参赛提交改为“不可见加密”模式（v3）：前端在 AC 后对参赛者昵称、代码字节数、提交时间与“完整代码”一起加密（XOR+8B key），仅将密文与密钥（hex）提交；提交页不再展示明文代码，避免被篡改。
+
+### Added
+- 提交页：隐藏明文代码并提示加密保护；保留 Fork/Issue 按钮（Issue 仅包含密文，不再附带代码明文）。新增“修改昵称”入口会同步更新元数据密文与链接。
+- 一键提交后端：`serverless/cloudflare-worker.js` 兼容 v3（解密 meta 与 encCode）并允许目录名保留空格（禁止斜杠，修剪与折叠空白）。
+- 管理辅助：`scripts/decrypt_submission.mjs` 可离线解密 payload（v2/v3），输出 meta 与代码长度预览。
+
+### Notes
+- 保留对 v2 的兼容：若遇旧 payload 仍会展示明文代码并按旧逻辑处理。
+- 轻量加密用于“防随手篡改”，非强对抗；生产可升级为 AES-GCM + 签名。
+
 # Changelog
 
 # [1.3.5] - 2025-11-07
@@ -7,8 +33,8 @@
 - 评测通过后未自动跳转提交页：由于浏览器弹窗拦截导致 `window.open` 失败，现改为点击时同步打开占位窗口并在评测通过后导航；若仍被拦截，则在弹窗内提供可点击链接与一键复制。
 
 ### Changed
-- 首页版本显示精简：移除竞赛版本号，仅显示编辑器版本（`v1.3.5`）。
-- 统一版本脚本更新：`scripts/version.js` 更新到 `v1.3.5`；`sw.js` 缓存版本同步提升以刷新离线资源。
+- 首页版本显示精简：移除赛事独立版本号，统一采用项目版本（例如 `v1.3.7`）。
+- 统一版本脚本更新：`scripts/version.js` 提供单一版本号；`sw.js` 缓存版本同步更新以刷新离线资源。
 
 ### Added
 - Issue 提交降级处理：若代码长度导致 Issue URL 过长（>7000 编码字符），自动生成精简版仅包含加密元数据，提示手动粘贴代码。

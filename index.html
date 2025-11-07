@@ -1,4 +1,4 @@
-<!--Version:1.3.5-->
+<!--Version:1.3.7-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -138,7 +138,7 @@
             <div class="meta">
                 <a id="contestLink" href="./competition/index.html" title="赛事 / Contest"><i class="fas fa-flag-checkered"></i> 赛事</a>
                 <span class="badge" id="netBadge" title="网络状态">在线</span>
-                <span class="badge" id="verBadge" title="版本">v1.3.5</span>
+                <span class="badge" id="verBadge" title="版本">v1.3.7</span>
             </div>
         </header>
 
@@ -193,7 +193,7 @@
             <button class="btn ghost" id="redoBtn" title="重做" disabled><i class="fas fa-redo"></i></button>
             <button class="btn ghost" id="fsBtn"><i class="fas fa-expand"></i> 全屏</button>
             <a id="introLink" href="./about.html" target="_blank" style="margin-left:auto;color:var(--muted);font-size:12px;text-decoration:none"><i class="fas fa-circle-info"></i> 简介与帮助</a>
-            <a id="versionLink" href="javascript:void(0)" style="color:var(--muted);font-size:12px;text-decoration:none;padding-left:12px">By C. He from ZJU | <span id="footerEditorVersion">v1.3.5</span></a>
+            <a id="versionLink" href="javascript:void(0)" style="color:var(--muted);font-size:12px;text-decoration:none;padding-left:12px">By C. He from ZJU | <span id="footerEditorVersion">v1.3.7</span></a>
         </div>
         </div>
     </div>
@@ -910,7 +910,11 @@ int main() {
                 }
                 if(!allPass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，阻止上传 / Wrong Answer blocked.'; try{ if(winRef && !winRef.closed) winRef.close(); }catch(e){} return; }
                 statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted，生成提交数据...';
-                const encPayload = secureContestPayload(challenge, source);
+                let encPayload = secureContestPayload(challenge, source);
+                // v4 secureContestPayload 返回 Promise
+                if (encPayload && typeof encPayload.then === 'function') {
+                    encPayload = await encPayload;
+                }
                 // 优先尝试一键提交（若配置了服务端）
                 try{
                     const ep = (window.__CONFIG__ && window.__CONFIG__.submitEndpoint) || '';
@@ -952,14 +956,58 @@ int main() {
                 let profile={}; try{ profile=JSON.parse(profileRaw||'{}'); }catch(e){}
                 const handle = (profile.handle||'').trim() || 'anon';
                 if(handle==='anon'){ console.warn('匿名 handle，后续工作流会拒绝。'); }
-                const bytes = new TextEncoder().encode(source).length;
+                const enc = new TextEncoder();
+                // v4: AES-GCM + RSA-OAEP(公钥包裹)；若未配置公钥则回退 v3
+                const pubPem = (window.__CONFIG__ && window.__CONFIG__.submitPublicKey) || '';
+                if (pubPem && typeof window.crypto?.subtle?.importKey === 'function'){
+                    return (async ()=>{
+                        const meta = {handle, challenge, bytes: enc.encode(source).length, ts:new Date().toISOString()};
+                        const bundle = JSON.stringify({ meta, code: source });
+
+                        // helpers
+                        const pemToArrayBuffer = (pem)=>{
+                            const b64 = pem.replace(/-----BEGIN [^-]+-----/g,'').replace(/-----END [^-]+-----/g,'').replace(/\s+/g,'');
+                            const bin = atob(b64); const buf = new Uint8Array(bin.length);
+                            for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf.buffer;
+                        };
+                        const bytesToB64 = (buf)=>{
+                            const b = new Uint8Array(buf); let s=''; for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s);
+                        };
+
+                        // 1) 生成 AES-256-GCM 密钥与随机 IV(12B)
+                        const aesKey = await crypto.subtle.generateKey({name:'AES-GCM', length:256}, true, ['encrypt']);
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+                        // 2) 加密 bundle
+                        const encBundle = await crypto.subtle.encrypt({name:'AES-GCM', iv}, aesKey, enc.encode(bundle));
+                        // 3) 导出原始对称密钥并用 RSA-OAEP(SHA-256) 包裹
+                        const rawAes = await crypto.subtle.exportKey('raw', aesKey);
+                        const spki = pemToArrayBuffer(pubPem);
+                        const publicKey = await crypto.subtle.importKey('spki', spki, {name:'RSA-OAEP', hash:'SHA-256'}, false, ['encrypt']);
+                        const keyWrap = await crypto.subtle.encrypt({name:'RSA-OAEP'}, publicKey, rawAes);
+
+                        return {
+                            type: 'contest',
+                            version: 4,
+                            challenge,
+                            alg: 'aes-256-gcm',
+                            iv: bytesToB64(iv),
+                            keyWrap: bytesToB64(keyWrap),
+                            encBundle: bytesToB64(encBundle)
+                        };
+                    })();
+                }
+                // 回退到 v3（XOR-8B），保持与现有流程兼容
+                const bytes = enc.encode(source).length;
                 const meta = JSON.stringify({handle, challenge, bytes, ts:new Date().toISOString()});
                 const keyBytes = new Uint8Array(8); (crypto.getRandomValues? crypto.getRandomValues(keyBytes): keyBytes.fill(7));
-                const metaBytes = new TextEncoder().encode(meta);
-                const outBytes = new Uint8Array(metaBytes.length);
-                for(let i=0;i<metaBytes.length;i++){ outBytes[i] = metaBytes[i] ^ keyBytes[i % keyBytes.length]; }
+                const metaBytes = enc.encode(meta);
+                const metaOut = new Uint8Array(metaBytes.length);
+                for(let i=0;i<metaBytes.length;i++){ metaOut[i] = metaBytes[i] ^ keyBytes[i % keyBytes.length]; }
+                const codeBytes = enc.encode(source);
+                const codeOut = new Uint8Array(codeBytes.length);
+                for(let i=0;i<codeBytes.length;i++){ codeOut[i] = codeBytes[i] ^ keyBytes[i % keyBytes.length]; }
                 const toHex = buf => Array.from(buf).map(b=>b.toString(16).padStart(2,'0')).join('');
-                return { type:'contest', version:2, challenge, code:source, enc: toHex(outBytes), key: toHex(keyBytes) };
+                return { type:'contest', version:3, challenge, enc: toHex(metaOut), encCode: toHex(codeOut), key: toHex(keyBytes) };
             }
             window.addEventListener('message', (ev)=>{
                 if(ev && ev.data && ev.data.type==='contest_profile_saved' && pendingContestCode){
@@ -1227,13 +1275,11 @@ int main() {
                 langBtn && langBtn.addEventListener('click', ()=>{ const next = (getLang()==='zh')?'en':'zh'; setLang(next); });
                 // 统一设置版本显示（页眉徽章与页脚链接）
                 try{
-                    if(window.__VERSION__){
-                        var vb=document.getElementById('verBadge');
-                        if(vb){ vb.textContent = window.__VERSION__.editor; }
-                        var fev=document.getElementById('footerEditorVersion'); if(fev) fev.textContent = window.__VERSION__.editor;
-                        // 竞赛版本在编译器主界面不再显示
-                        var fcv=document.getElementById('footerContestVersion'); if(fcv) fcv.remove();
-                    }
+                        if(window.__VERSION__){
+                            var vb=document.getElementById('verBadge');
+                            if(vb){ vb.textContent = window.__VERSION__.version; }
+                            var fev=document.getElementById('footerEditorVersion'); if(fev) fev.textContent = window.__VERSION__.version;
+                        }
                 }catch(e){}
             }catch(e){}
             // 注册 Service Worker

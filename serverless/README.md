@@ -13,6 +13,7 @@
 3) 在 Worker 的“Settings → Variables（环境变量）”里配置：
    - `REPO`：你的目标仓库，例如 `DanielHe666/c`
    - `BASE_BRANCH`：主分支名，例如 `main`
+  - （可选，启用 v4 强加密）`SUBMIT_PRIVATE_KEY`：RSA 私钥（PKCS#8 PEM，供服务端解包对称密钥并解密 AES-GCM）
    - 认证（两选一，推荐 GitHub App）：
      - GitHub App：`GITHUB_APP_ID`、`GITHUB_INSTALLATION_ID`、`GITHUB_PRIVATE_KEY`（PEM）
      - 或者使用精细化权限的 `GITHUB_TOKEN`（PAT，授予 contents:write, pull_requests:write）
@@ -34,7 +35,11 @@ https://your-worker.example.workers.dev/submit
 编辑仓库中的 `scripts/version.js`，设置全局配置：
 
 ```js
-window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/submit' };
+window.__CONFIG__ = {
+  submitEndpoint: 'https://your-worker.example.workers.dev/submit',
+  // 启用 v4 AES-GCM + 公钥包裹（推荐）：将服务端对应的 RSA 公钥(PEM, SPKI) 配置到此
+  submitPublicKey: `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkq...\n-----END PUBLIC KEY-----\n`
+};
 ```
 
 保存提交后，前端在评测 AC 时会优先尝试向该地址 POST 提交；成功会显示“提交成功”并给出 PR 链接；失败会回退到原有的提交页（Fork/PR 或 Issue 备用）。
@@ -45,7 +50,7 @@ window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/s
 - Worker 层建议增加：
   - 速率限制（Rate limiting）
   - 人机验证（如 Cloudflare Turnstile）
-  - 额外参数校验/签名（若需要更强的完整性保证）
+  - 额外参数校验/签名（若需要更强的完整性保证）。v4 已使用 AES-GCM（带认证标签）+ 公钥包裹，对客户端篡改具备强抵抗；无需把私钥放到前端。
 - 示例已限制代码大小为 64KB，并内置 CORS。
 - 仓库侧已有校验工作流：路径规则、编译、预测排名、ready 标签与自动合并；匿名 handle（`anon`）路径会被拒绝。
 
@@ -60,7 +65,7 @@ window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/s
 
 ## How it works (English)
 
-- Front-end (index.html) sends the encrypted payload produced by `secureContestPayload` (version: 2).
+- Front-end (index.html) sends the encrypted payload produced by `secureContestPayload` (version: 2/3/4).
 - The Worker decrypts metadata (handle, challenge, bytes, ts), creates a branch/commit under `submissions/week-<n>/<handle>/solution.c`, and opens a PR.
 - Your existing CI (`validate-submission.yml`, `compute-rank.yml`) handles validation and leaderboard updates.
 
@@ -70,6 +75,7 @@ window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/s
 2. Configure environment variables (Settings → Variables):
    - `REPO`: e.g., `DanielHe666/c`
    - `BASE_BRANCH`: e.g., `main`
+  - (Optional, enable v4 strong crypto) `SUBMIT_PRIVATE_KEY`: RSA private key (PKCS#8 PEM) used to unwrap AES key and decrypt AES-GCM bundle
    - Either provide `GITHUB_TOKEN` (fine-grained PAT with repo contents+pull requests), or set up a GitHub App and provide:
      - `GITHUB_APP_ID`
      - `GITHUB_INSTALLATION_ID`
@@ -78,7 +84,11 @@ window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/s
 4. Edit `scripts/version.js` to set:
 
 ```js
-window.__CONFIG__ = { submitEndpoint: 'https://your-worker.example.workers.dev/submit' };
+window.__CONFIG__ = {
+  submitEndpoint: 'https://your-worker.example.workers.dev/submit',
+  // Enable v4 AES-GCM + RSA-OAEP key wrapping: paste the server's RSA public key (PEM, SPKI)
+  submitPublicKey: `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkq...\n-----END PUBLIC KEY-----\n`
+};
 ```
 
 ## Front-end behavior (English)

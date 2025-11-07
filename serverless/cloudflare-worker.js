@@ -19,24 +19,66 @@ export default {
     }
     let body;
     try { body = await request.json(); } catch { return json({ ok:false, error:'Invalid JSON' }, 400); }
-    if (!body || body.type !== 'contest' || body.version !== 2 || !body.enc || !body.key || !body.code) {
-      return json({ ok:false, error:'Bad payload' }, 400);
+    if (!body || body.type !== 'contest') {
+      return json({ ok:false, error:'Bad payload type' }, 400);
+    }
+    if (body.version === 2) {
+      if(!body.enc || !body.key || !body.code) return json({ ok:false, error:'Bad v2 payload' }, 400);
+    } else if (body.version === 3) {
+      if(!body.enc || !body.key || !body.encCode) return json({ ok:false, error:'Bad v3 payload' }, 400);
+    } else if (body.version === 4) {
+      if(!body.iv || !body.keyWrap || !body.encBundle) return json({ ok:false, error:'Bad v4 payload' }, 400);
+    } else {
+      return json({ ok:false, error:'Unsupported version' }, 400);
     }
     // Limit code size to 64KB
-    const codeText = String(body.code);
+    let codeText = '';
+    if(body.version === 2){
+      codeText = String(body.code||'');
+    } else if(body.version === 3){
+      // decrypt code
+      try {
+        const encCode = hexToBytes(body.encCode);
+        const key = hexToBytes(body.key);
+        const out = new Uint8Array(encCode.length);
+        for(let i=0;i<encCode.length;i++){ out[i] = encCode[i] ^ key[i % key.length]; }
+        codeText = new TextDecoder().decode(out);
+      } catch(e){ return json({ ok:false, error:'Decrypt code failed' }, 400); }
+    } else if(body.version === 4){
+      // AES-GCM decrypt with RSA-OAEP wrapped key
+      try{
+        const privPem = env.SUBMIT_PRIVATE_KEY;
+        if(!privPem) return json({ ok:false, error:'Missing SUBMIT_PRIVATE_KEY' }, 500);
+        const iv = b64ToBytes(body.iv);
+        const wrapped = b64ToBytes(body.keyWrap);
+        const encBundle = b64ToBytes(body.encBundle);
+        const privKey = await crypto.subtle.importKey('pkcs8', pemToArrayBuffer(privPem), { name:'RSA-OAEP', hash:'SHA-256' }, false, ['decrypt']);
+        const rawAes = await crypto.subtle.decrypt({ name:'RSA-OAEP' }, privKey, wrapped);
+        const aesKey = await crypto.subtle.importKey('raw', rawAes, { name:'AES-GCM' }, false, ['decrypt']);
+        const plainBuf = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, aesKey, encBundle);
+        const bundle = JSON.parse(new TextDecoder().decode(new Uint8Array(plainBuf)));
+        if(!bundle || typeof bundle.code!=='string' || !bundle.meta){ return json({ ok:false, error:'Bad v4 bundle' }, 400); }
+        codeText = bundle.code;
+        body.__v4meta = bundle.meta; // carry for later use
+      }catch(e){ return json({ ok:false, error:'Decrypt v4 failed: '+(e&&e.message) }, 400); }
+    }
     if (new TextEncoder().encode(codeText).length > 64*1024) {
       return json({ ok:false, error:'Code too large' }, 413);
     }
     // Decrypt metadata
     let meta;
-    try {
-      const enc = hexToBytes(body.enc);
-      const key = hexToBytes(body.key);
-      const out = new Uint8Array(enc.length);
-      for (let i=0;i<enc.length;i++) out[i] = enc[i] ^ key[i % key.length];
-      meta = JSON.parse(new TextDecoder().decode(out));
-    } catch (e) {
-      return json({ ok:false, error:'Decrypt failed' }, 400);
+    if(body.version === 4){
+      meta = body.__v4meta;
+    } else {
+      try {
+        const encMeta = hexToBytes(body.enc);
+        const key = hexToBytes(body.key);
+        const out = new Uint8Array(encMeta.length);
+        for (let i=0;i<encMeta.length;i++) out[i] = encMeta[i] ^ key[i % key.length];
+        meta = JSON.parse(new TextDecoder().decode(out));
+      } catch (e) {
+        return json({ ok:false, error:'Decrypt meta failed' }, 400);
+      }
     }
     const handle = sanitizeHandle(meta.handle||'');
     const week = parseWeek(meta.challenge||'');
@@ -86,7 +128,9 @@ function json(obj, status=200){
   return cors(res);
 }
 function hexToBytes(hex){ if(hex.length%2) throw new Error('bad hex'); const arr=new Uint8Array(hex.length/2); for(let i=0;i<arr.length;i++){ arr[i]=parseInt(hex.substr(i*2,2),16); } return arr; }
-function sanitizeHandle(s){ return String(s).trim().replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,32); }
+function b64ToBytes(b64){ const bin = atob(b64); const out = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+// Allow spaces in path handle; forbid slashes, collapse spaces, trim, cap length
+function sanitizeHandle(s){ return String(s).replace(/[\\/]/g,'-').trim().replace(/\s+/g,' ').slice(0,64); }
 function parseWeek(ch){ const m=String(ch).match(/week-(\d+)/i); return m? parseInt(m[1],10): 0; }
 
 async function getGitHub(env){
