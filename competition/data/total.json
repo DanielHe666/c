@@ -1,9 +1,14 @@
 {
   "repo": "ChenyuHeee/c",
-  "updatedAt": "2025-11-07T16:02:54.261Z",
+  "updatedAt": "2025-11-07T16:06:44.479Z",
   "ranks": [
     {
       "handle": "我要拿冠军",
+      "weeks": 1,
+      "best": 277
+    },
+    {
+      "handle": "我也要拿冠军",
       "weeks": 1,
       "best": 277
     },
