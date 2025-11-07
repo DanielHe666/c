@@ -11,7 +11,7 @@
 1) 在 Cloudflare 控制台新建一个 Worker（或用 `wrangler`）。
 2) 将 `serverless/cloudflare-worker.js` 的内容完整复制到 Worker 编辑器中并保存部署。
 3) 在 Worker 的“Settings → Variables（环境变量）”里配置：
-   - `REPO`：你的目标仓库，例如 `DanielHe666/c`
+  - `REPO`：你的目标仓库，例如 `ChenyuHeee/c`
    - `BASE_BRANCH`：主分支名，例如 `main`
   - （可选，启用 v4 强加密）`SUBMIT_PRIVATE_KEY`：RSA 私钥（PKCS#8 PEM，供服务端解包对称密钥并解密 AES-GCM）
    - 认证（两选一，推荐 GitHub App）：
@@ -73,7 +73,7 @@ window.__CONFIG__ = {
 
 1. Create a new Worker (via dashboard or `wrangler`), copy `cloudflare-worker.js` as the entry.
 2. Configure environment variables (Settings → Variables):
-   - `REPO`: e.g., `DanielHe666/c`
+  - `REPO`: e.g., `ChenyuHeee/c`
    - `BASE_BRANCH`: e.g., `main`
   - (Optional, enable v4 strong crypto) `SUBMIT_PRIVATE_KEY`: RSA private key (PKCS#8 PEM) used to unwrap AES key and decrypt AES-GCM bundle
    - Either provide `GITHUB_TOKEN` (fine-grained PAT with repo contents+pull requests), or set up a GitHub App and provide:

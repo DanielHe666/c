@@ -46,6 +46,25 @@ function getCommitMeta(fileAbs){
   }
 }
 
+function tryParseContestEncrypted(text){
+  try{
+    // Fast check: must start with '{'
+    if(!/^\s*\{/.test(text)) return null;
+    const obj = JSON.parse(text);
+    if(!obj || obj.type!=='contest') return null;
+    if(obj.version!==3 || !obj.encCode || !obj.key) return null; // only v3 supported in ranking decrypt
+    // Decode hex -> bytes
+    if(!/^([0-9a-fA-F]{2})+$/.test(obj.key) || !/^([0-9a-fA-F]{2})+$/.test(obj.encCode)) return null;
+    const toBytes = (hex)=>{ const arr=new Uint8Array(hex.length/2); for(let i=0;i<arr.length;i++){ arr[i]=parseInt(hex.substr(i*2,2),16); } return arr; };
+    const keyBytes = toBytes(obj.key);
+    const encBytes = toBytes(obj.encCode);
+    const out = new Uint8Array(encBytes.length);
+    for(let i=0;i<encBytes.length;i++){ out[i] = encBytes[i] ^ keyBytes[i % keyBytes.length]; }
+    const code = new TextDecoder().decode(out);
+    return { code, meta: obj }; // meta includes challenge
+  }catch(e){ return null; }
+}
+
 async function computeWeek(week){
   const weekDir = path.join(SUBMISSIONS, `week-${week}`);
   const handles = await listDirs(weekDir);
@@ -58,7 +77,16 @@ async function computeWeek(week){
     const pick = files.includes('solution.c') ? 'solution.c' : files[0];
     const fAbs = path.join(hDir, pick);
     const buf = await fs.readFile(fAbs);
-    const bytes = Buffer.byteLength(buf);
+    let bytes = Buffer.byteLength(buf); // default: raw file length (plaintext legacy)
+  let decryptedCode = null;
+    try{
+      const txt = buf.toString('utf8');
+      const parsed = tryParseContestEncrypted(txt);
+      if(parsed){
+        decryptedCode = parsed.code;
+  bytes = Buffer.byteLength(decryptedCode, 'utf8'); // bytes of original code
+      }
+    }catch(_){ /* ignore parse errors */ }
     const meta = getCommitMeta(fAbs);
     const relPosix = ['submissions', `week-${week}`, handle, pick].join('/');
     entries.push({handle, bytes, commitTime: meta.time, sha: meta.sha, path: relPosix});

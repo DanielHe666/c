@@ -6,7 +6,7 @@ compatibility_date = "2025-11-07"     # 根据部署日期调整
 # workers_dev = true   # 若使用 *.workers.dev 域名
 
 [vars]
-REPO = "DanielHe666/c"          # 目标仓库 (owner/repo)
+REPO = "ChenyuHeee/c"          # 目标仓库 (owner/repo)
 BASE_BRANCH = "main"            # 基准分支
 
 # 下面这些不应写入明文 (用 wrangler secret put 设置)：

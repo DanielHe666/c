@@ -4,7 +4,7 @@
 // - Creates a PR to the target GitHub repo by committing submissions/week-<n>/<handle>/solution.c
 // Requirements:
 //   - Set secrets in Cloudflare Worker: GITHUB_APP_ID, GITHUB_INSTALLATION_ID, GITHUB_PRIVATE_KEY (PEM) OR GITHUB_TOKEN (fine-grained PAT)
-//   - Set REPO (e.g., "DanielHe666/c") and BASE_BRANCH (e.g., "main")
+//   - Set REPO (e.g., "ChenyuHeee/c") and BASE_BRANCH (e.g., "main")
 // Notes:
 //   - For production, prefer GitHub App over PAT, and implement additional validation (rate-limit, size checks, signature, captcha as needed)
 
@@ -84,7 +84,7 @@ export default {
     const week = parseWeek(meta.challenge||'');
     if (!handle || !week) return json({ ok:false, error:'Missing handle or week' }, 400);
 
-    const repo = env.REPO || 'DanielHe666/c';
+  const repo = env.REPO || 'ChenyuHeee/c';
     const base = env.BASE_BRANCH || 'main';
     const ts = new Date().toISOString().replace(/[:.]/g,'-');
     const branch = `contest/week-${week}/${handle}/${ts}`;

@@ -35,7 +35,7 @@
       <div id="meta" class="muted" style="margin-top:6px"></div>
       <div id="pathInfo" class="muted" style="margin-top:6px"></div>
       <div class="row" style="margin-top:8px">
-        <button id="copyBtn" class="btn"><i class="fas fa-copy"></i> 复制代码 Copy Code</button>
+  <button id="copyBtn" class="btn"><i class="fas fa-copy"></i> 复制密文 Copy Encrypted</button>
         <a id="forkBtn" class="btn" target="_blank" rel="noreferrer"><i class="fas fa-code-fork"></i> Fork 仓库 Fork Repo</a>
         <a id="openGh" class="btn" target="_blank" rel="noreferrer"><i class="fas fa-file-circle-plus"></i> 在 Fork 中建文件 New File in Fork</a>
         <a id="issueBtn" class="btn primary" target="_blank" rel="noreferrer"><i class="fas fa-exclamation-circle"></i> 备用：Issue 提交 Alt: Issue</a>
@@ -45,8 +45,8 @@
       <div class="muted" style="margin-top:8px" id="flowTips">
         标准流程（推荐 Fork + PR）:<br>
         1. 点击 Fork（若已 Fork 可忽略）。<br>
-        2. 在你的 Fork 仓库中新建文件路径：<code>submissions/week-&lt;n&gt;/&lt;handle&gt;/solution.c</code> 粘贴代码。<br>
-        3. 发起 Pull Request 回主仓库（DanielHe666/c）。<br>
+  2. 在你的 Fork 仓库中新建文件路径：<code>submissions/week-&lt;n&gt;/&lt;handle&gt;/solution.c</code>，将下方“密文/内容”完整粘贴进去保存（不要改文件名）。<br>
+  3. 发起 Pull Request 回主仓库（ChenyuHeee/c）。<br>
         备用流程：无法方便地发 PR 时，可使用 “Issue 提交” 按钮，自动生成包含加密元数据与代码的 Issue；管理员稍后手动归档。<br>
         提示：此页面仅提供内容，不具备直接写入主仓库权限——参赛者需 Fork 后操作。
       </div>
@@ -65,7 +65,7 @@
   function toHex(buf){ return Array.from(buf).map(b=>b.toString(16).padStart(2,'0')).join(''); }
   // 允许空格的目录名：仅禁止 / 与 \\，并去除首尾空格；将连续空白折叠为单个空格
   function toPathHandle(s){ return String(s||'').replace(/[\\/]/g,'-').trim().replace(/\s+/g,' '); }
-  const OWNER='DanielHe666';
+  const OWNER='ChenyuHeee';
   const REPO='c';
     (function(){
       const h=location.hash||''; if(!h.startsWith('#submission=')){ document.getElementById('summary').textContent='无提交数据 / No submission payload.'; return; }
@@ -90,7 +90,7 @@
             if(obj.encBundle && obj.iv && obj.keyWrap){
               // 元数据嵌入在服务端可解密的 bundle 中，这里仅显示占位
               document.getElementById('meta').textContent = `v4 加密提交：AES-GCM + 公钥包裹。源码与元数据已加密。`;
-              codeEl.value = '（v4：源码与元数据已通过 AES-GCM 加密，不在客户端展示）';
+              codeEl.value = '（v4：本页面不提供一键粘贴内容。请使用“Issue 提交”或管理员通道。）';
               codeEl.readOnly = true;
               document.getElementById('copyBtn').style.display='none';
               document.getElementById('openGh').style.display='none';
@@ -130,13 +130,14 @@
             meta = JSON.parse(metaStr||'{}');
             if(meta && meta.handle){ displayHandle = meta.handle; safeHandle = toPathHandle(meta.handle); }
             document.getElementById('meta').textContent = `校验通过：bytes=${meta.bytes}, handle=${meta.handle}, ts=${meta.ts}`;
-            // version:3 则隐藏明文代码，禁止复制与新建文件（需要走一键提交或 Issue 方式）
+            // v3：展示需要粘贴到 solution.c 的密文 JSON 内容
             if(obj.version>=3){
-              // 若存在 encCode，说明代码被加密，不在前端展示
-              codeEl.value = '（为保护公平与防篡改，本次提交的代码已加密，不在此处展示）';
-              codeEl.readOnly = true;
-              document.getElementById('copyBtn').style.display='none';
-              document.getElementById('openGh').style.display='none';
+              const slim = { type:'contest', version:3, challenge: obj.challenge, enc: obj.enc, encCode: obj.encCode, key: obj.key };
+              codeEl.value = JSON.stringify(slim, null, 2);
+              codeEl.readOnly = false;
+              document.getElementById('copyBtn').style.display='inline-flex';
+              document.getElementById('openGh').style.display='inline-flex';
+              document.getElementById('copyBtn').innerHTML='<i class="fas fa-copy"></i> 复制密文 Copy Encrypted';
             }
           }
         }catch(e){ document.getElementById('meta').textContent='元数据解析失败（非致命）'; }
@@ -220,7 +221,7 @@
         copyBtnCode.addEventListener('click',()=>{
           navigator.clipboard.writeText(document.getElementById('code').value).then(()=>{
             copyBtnCode.innerHTML='<i class="fas fa-check"></i> 已复制 Copied';
-            setTimeout(()=>{ copyBtnCode.innerHTML='<i class="fas fa-copy"></i> 复制代码 Copy Code'; }, 1200);
+            setTimeout(()=>{ copyBtnCode.innerHTML='<i class=\"fas fa-copy\"></i> 复制密文 Copy Encrypted'; }, 1200);
           });
         });
         // 修改昵称入口：弹出简单对话框，仅更新 localStorage 并刷新自身（不改变已提交的加密数据）
