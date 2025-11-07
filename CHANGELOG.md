@@ -1,3 +1,20 @@
+# [1.3.10] - 2025-11-07
+### Changed
+- GitHub 用户名从 `DanielHe666` 迁移为 `ChenyuHeee`：更新所有示例与链接（README、提交页、Serverless 示例、榜单数据）。
+- 移除“一键提交”功能：禁用 `window.__CONFIG__.submitEndpoint` 与公钥配置，取消 Cloudflare Worker 提交路径。
+- 提交流程回归简化模式：评测通过后前端生成 v3 加密 JSON（包含 `enc`/`encCode`/`key`），选手在 Fork 仓库路径 `submissions/week-<n>/<handle>/solution.c` 中粘贴该密文文件并发 PR。
+- 排行榜代码列不再跳转 GitHub，而是指向站点内部 `competition/view.html` 页面，前端自动解析并解密显示源码。
+
+### Added
+- 新增 `competition/view.html`：可视化解密页面，支持 v3 密文 JSON 解码展示原始源码与基本元数据（handle, challenge, bytes, ts）。
+
+### Removed
+- 强加密一键提交（v4 + RSA-OAEP 包裹）在前端停用；若后续需要可重新配置公钥与 Worker 端点恢复。
+
+### Notes
+- 当前加密文件内容不再可直接编译（存储为 JSON 密文）；排行榜生成脚本已支持自动解密计算原始字节数。
+- 若使用旧仓库 Fork，需要同步更新远端 origin 以获得最新 README 链接与说明。
+
 # [1.3.7] - 2025-11-07
 # [1.3.8] - 2025-11-07
 ### Removed

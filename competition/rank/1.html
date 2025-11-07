@@ -118,8 +118,7 @@
         tbody.innerHTML='';
         data.ranks.forEach((row,idx)=>{
           const tr=document.createElement('tr');
-          const branch = data.branch || 'main';
-          const codeHref = row.path ? `https://github.com/${data.repo}/blob/${encodeURIComponent(branch)}/${encodePath(row.path)}` : '';
+          const codeHref = row.path ? `../view.html?path=${encodeURIComponent(row.path)}&repo=${encodeURIComponent(data.repo||'')}&branch=${encodeURIComponent(data.branch||'main')}` : '';
           const codeCell = codeHref ? `<a href="${codeHref}" target="_blank" rel="noreferrer">${t('code')}</a>` : '-';
           tr.innerHTML=`<td>${idx+1}</td><td>${row.handle}</td><td>${row.bytes}</td><td>${formatTime(row.commitTime)}</td><td>${codeCell}</td>`;
           tbody.appendChild(tr);

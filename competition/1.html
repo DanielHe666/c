@@ -64,6 +64,23 @@
   *</code></pre>
     </div>
 
+    <div class="card" id="submitCard">
+      <h2><i class="fas fa-paper-plane"></i> 直接在此提交 · Submit Here</h2>
+      <div class="muted" id="submitTips">在下方粘贴你的 C 代码，填写昵称（仅首次），点击“评测并提交”。评测通过才会提交到排行榜。</div>
+      <div class="row" style="margin:10px 0;gap:10px;align-items:center">
+        <label for="handleInput">昵称 Handle</label>
+        <input id="handleInput" type="text" placeholder="你的昵称（可含空格，不可含/\\）" style="flex:1;min-width:220px"/>
+        <button id="saveHandleBtn" class="btn"><i class="fas fa-user-check"></i> 保存昵称</button>
+      </div>
+      <textarea id="codeInput" placeholder="在此粘贴你的 C 代码..." style="width:100%;min-height:240px;background:#161a1e;border:1px solid #222;border-radius:8px;color:#e6eef6;padding:10px 12px;font-family:Menlo,monospace;font-size:13px"></textarea>
+      <div class="row" style="margin-top:8px;gap:10px;flex-wrap:wrap">
+  <button id="judgeSubmitBtn" class="btn primary"><i class="fas fa-medal"></i> 评测并生成密文</button>
+        <a class="btn" href="./rank/1.html" target="_blank" rel="noreferrer"><i class="fas fa-medal"></i> 查看第1期排行榜</a>
+  <a class="btn" href="./submit.html" target="_blank" rel="noreferrer"><i class="fas fa-share-from-square"></i> 提交页（粘贴密文）</a>
+      </div>
+      <div id="submitStatus" class="muted" style="margin-top:8px"></div>
+    </div>
+
     <div class="card">
       <h2 id="rulesTitle">提交 & 排名规则</h2>
       <ul id="rulesList" style="line-height:1.7;margin:0 0 10px;padding-left:18px">
@@ -107,6 +124,8 @@
       <a class="btn" href="../about.html"><i class="fas fa-circle-info"></i> 关于 About</a>
     </div>
   </div>
+  <script src="../scripts/version.js"></script>
+  <script src="../scripts/contest_submit.js"></script>
   <script>
     const i18n={
       zh:{ title:'第 1 期 · Week 1', header:'第 1 期 · Week 1', back:'返回列表 List', rank:'排行榜 Rank', total:'总榜 Total',
@@ -199,6 +218,71 @@
     document.getElementById('langBtn').addEventListener('click',()=>{ setLang(getLang()==='zh'?'en':'zh'); updateToggleLabels(); });
     applyLang();
     setupSampleToggles();
+
+    // —— 提交区域逻辑 ——
+    (function(){
+      const handleInput = document.getElementById('handleInput');
+      const saveHandleBtn = document.getElementById('saveHandleBtn');
+      const codeInput = document.getElementById('codeInput');
+      const judgeBtn = document.getElementById('judgeSubmitBtn');
+      const statusEl = document.getElementById('submitStatus');
+      // 预填 handle
+      try{ const h = window.__ContestSubmit.getHandle(); if(h) handleInput.value = h; }catch(e){}
+      saveHandleBtn.addEventListener('click', ()=>{
+        const raw = (handleInput.value||'').trim();
+        if(!raw){ alert('昵称不能为空'); return; }
+        window.__ContestSubmit.setProfile({ handle: raw });
+        saveHandleBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
+        setTimeout(()=>{ saveHandleBtn.innerHTML = '<i class="fas fa-user-check"></i> 保存昵称'; }, 1200);
+      });
+
+      function genDiamond(n){ const lines=[]; const mid=(n-1)/2; for(let r=0;r<n;r++){ const dist=Math.abs(mid-r); const stars=n-2*dist; const spaces=dist; lines.push(' '.repeat(spaces)+('*'.repeat(stars))); } return lines.join('\n'); }
+      async function tryWandbox(code, stdin){
+        const wandboxUrl='https://wandbox.org/api/compile.json';
+        const payload={ code, compiler:'gcc-head', stdin: stdin||undefined, save:false };
+        const res = await fetch(wandboxUrl,{method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload)});
+        if(!res.ok) throw new Error('wandbox '+res.status);
+        const j=await res.json();
+        const out=(j.program_output||j.program_stdout||j.program||j.result||'')||'';
+        return out.replace(/\n+$/,'');
+      }
+      async function judgeWeek1(source){
+        let tests=[];
+        try{ const r=await fetch('./data/tests/week-1.json',{cache:'no-store'}); if(r.ok) tests = await r.json(); }catch(_){ }
+        if(!Array.isArray(tests)||!tests.length){ tests=[1,3,5].map(n=>({stdin:String(n)+'\n', expected: genDiamond(n)})); }
+        for(const tc of tests){
+          const out = await tryWandbox(source, tc.stdin);
+          const exp = (tc.expect||tc.expected||'').replace(/\n+$/,'');
+          if(out!==exp) return false;
+        }
+        return true;
+      }
+
+      judgeBtn.addEventListener('click', async ()=>{
+        const handleRaw = (handleInput.value||'').trim();
+        if(!handleRaw){ alert('请先填写昵称'); return; }
+        window.__ContestSubmit.setProfile({ handle: handleRaw });
+        const source = codeInput.value||'';
+        if(!source.trim()){ alert('请粘贴代码'); return; }
+        statusEl.style.color=''; statusEl.textContent='评测中 / Judging...';
+        try{
+          const pass = await judgeWeek1(source);
+          if(!pass){ statusEl.style.color='#ff6b6b'; statusEl.textContent='WA：输出不匹配，已阻止提交。'; return; }
+        }catch(e){ statusEl.style.color='#ffb020'; statusEl.textContent='评测失败（网络/服务异常），请稍后再试。'; return; }
+        statusEl.style.color='#56d364'; statusEl.textContent='通过 | Accepted，打包提交...';
+        try{
+          const payload = await window.__ContestSubmit.buildPayload('week-1', source);
+          // 强制使用 v3（配置已禁用公钥与端点），构造 slim JSON 供粘贴
+          const slim = payload.version===3 ? { type:'contest', version:3, challenge: payload.challenge, enc: payload.enc, encCode: payload.encCode, key: payload.key } : payload;
+          const jsonStr = JSON.stringify(slim, null, 2);
+          // 打包并在页面显示复制链接（跳转提交页）
+          const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+          const url = './submit.html#submission='+b64;
+          statusEl.innerHTML='✅ 通过 | Accepted。<br>1) 点击下方“提交页”打开。<br>2) 在新建文件中粘贴以下密文 JSON 并保存：<br><pre style="background:#161a1e;padding:10px;border-radius:8px;overflow:auto;font-size:12px"><code>'+jsonStr.replace(/[&<>]/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))+'</code></pre>';
+          const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noreferrer'; a.textContent='打开提交页（新标签）'; a.className='btn'; a.style.marginTop='8px'; statusEl.appendChild(a);
+        }catch(e){ statusEl.style.color='#ff6b6b'; statusEl.textContent='生成密文失败：'+(e&&e.message||e); }
+      });
+    })();
   </script>
 </body>
 </html>
