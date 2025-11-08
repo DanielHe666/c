@@ -68,12 +68,21 @@ jobs:
 
       - name: Build (compile test)
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y build-essential
-          gcc -std=c11 -O2 "${{ steps.validate.outputs.primary }}" -o /tmp/a.out
-          echo "Compile OK"
-          # Optional smoke run (no stdin). Ignore failures.
-          /tmp/a.out || true
+          file="${{ steps.validate.outputs.primary }}"
+          # Check if file contains encrypted JSON format (starts with '{')
+          first_char=$(head -c 1 "$file" | tr -d '[:space:]')
+          if [ "$first_char" = "{" ]; then
+            echo "Detected encrypted content (JSON format). Skipping compilation test."
+            echo "File is accepted as-is."
+          else
+            echo "Detected plain C code. Running compilation test."
+            sudo apt-get update -y
+            sudo apt-get install -y build-essential
+            gcc -std=c11 -O2 "$file" -o /tmp/a.out
+            echo "Compile OK"
+            # Optional smoke run (no stdin). Ignore failures.
+            /tmp/a.out || true
+          fi
 
       - name: Predict rank
         id: predict
