@@ -4,7 +4,7 @@
   - Runtime cache for GET requests (cache-first with network fallback)
   Note: bump VERSION when index.html or core assets change to refresh cache.
 */
-const VERSION = 'v1.3.19';
+const VERSION = 'v1.3.20';
 const CACHE_NAME = `c-compiler-${VERSION}`;
 const CORE_ASSETS = [
   './',
