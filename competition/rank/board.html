@@ -78,45 +78,53 @@
 
     function formatTime(iso){ try{ const d=new Date(iso); if(!isNaN(d)) return d.toLocaleString(); }catch(e){} return iso||'-'; }
 
-    function dataUrl(id){
-      // Build absolute path that works on GitHub Pages under subpath (e.g., /c/)
-      const p = location.pathname; // /c/competition/rank/board.html
-      const root = p.includes('/competition/') ? p.slice(0, p.indexOf('/competition/')) : '';
-      return `${root}/competition/data/prob-${id}.json?fresh=${Date.now()}`;
+    function relUrl(id){
+      // Mimic ladder page: use simple relative path so Pages 子路径与本地均可工作
+      return `../data/prob-${id}.json?fresh=${Date.now()}`;
     }
     function rawUrl(id){
-      // Fallback to raw.githubusercontent.com if page branch lacks JSON
+      // 原始仓库回退，防止主分支 JSON 尚未被 Pages 缓存或 SW 干扰
+      // owner 取 github.io 前缀；repo 取路径第一段（仓库名）
       const owner = (location.hostname.split('.')[0]||'').toLowerCase();
-      const pathSegs = location.pathname.split('/').filter(Boolean); // ["c","competition","rank","board.html"]
-      const repo = pathSegs.length>0 ? pathSegs[0] : 'c';
+      const segs = location.pathname.split('/').filter(Boolean);
+      const repo = segs[0] || 'c';
       return `https://raw.githubusercontent.com/${owner}/${repo}/main/competition/data/prob-${id}.json?fresh=${Date.now()}`;
     }
     async function load(){
-      const id=paramId(); const tbody=document.getElementById('tbody');
-      try{
-        const url = dataUrl(id);
-        let res = await fetch(url,{cache:'no-store'});
-        if(res.status===404 || res.status===403){
-          // Try raw fallback
-          const rurl = rawUrl(id);
-          console.warn('[board] local JSON missing, fallback to raw:', rurl);
-          res = await fetch(rurl,{cache:'no-store'});
+      const id = paramId();
+      const tbody = document.getElementById('tbody');
+      try {
+        let res = await fetch(relUrl(id), { cache:'no-store' });
+        if(!res.ok) {
+          console.warn('[board] primary fetch failed status=', res.status, 'fallback to raw');
+          res = await fetch(rawUrl(id), { cache:'no-store' });
         }
-        if(res.status===404){ tbody.innerHTML=`<tr><td colspan="6" class="muted">${t('empty')}</td></tr>`; return; }
+        if(res.status===404){
+          tbody.innerHTML = `<tr><td colspan="6" class="muted">${t('empty')}</td></tr>`;
+          return;
+        }
         if(!res.ok) throw new Error('HTTP '+res.status);
-        const data=await res.json();
-        const up=document.getElementById('updated'); if(data.updatedAt && up){ up.textContent=`${t('updated')}: ${formatTime(data.updatedAt)}`; }
-        const diff=document.getElementById('diffBadge'); if(diff){ const dVal=data.difficulty; if(typeof dVal==='number'){ diff.textContent=`${t('difficulty')}: D = ${dVal}`; } }
+        const data = await res.json();
+        const up = document.getElementById('updated');
+        if(data.updatedAt && up){ up.textContent = `${t('updated')}: ${formatTime(data.updatedAt)}`; }
+        const diff = document.getElementById('diffBadge');
+        if(diff){ const dVal = data.difficulty; if(typeof dVal==='number'){ diff.textContent = `${t('difficulty')}: D = ${dVal}`; } }
         tbody.innerHTML='';
         (data.ranks||[]).forEach((row,idx)=>{
-          const codeHref=row.path?`../view.html?path=${encodeURIComponent(row.path)}&repo=${encodeURIComponent(data.repo||'')}&branch=${encodeURIComponent(data.branch||'main')}`:'';
-          const codeCell=codeHref?`<a href="${codeHref}" target="_blank" rel="noreferrer">${t('code')}</a>`:'-';
-          const tr=document.createElement('tr');
-          tr.innerHTML=`<td>${idx+1}</td><td>${row.handle}</td><td>${row.bytes}</td><td>${formatTime(row.commitTime)}</td><td>${row.points??'-'}</td><td>${codeCell}</td>`;
+          const codeHref = row.path ? `../view.html?path=${encodeURIComponent(row.path)}&repo=${encodeURIComponent(data.repo||'')}&branch=${encodeURIComponent(data.branch||'main')}` : '';
+          const codeCell = codeHref ? `<a href="${codeHref}" target="_blank" rel="noreferrer">${t('code')}</a>` : '-';
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${idx+1}</td><td>${row.handle}</td><td>${row.bytes}</td><td>${formatTime(row.commitTime)}</td><td>${row.points??'-'}</td><td>${codeCell}</td>`;
           tbody.appendChild(tr);
         });
-        if(!data.ranks||data.ranks.length===0){ tbody.innerHTML=`<tr><td colspan="6" class="muted">${t('empty')}</td></tr>`; }
-      }catch(e){ console.error('[board] load failed', e); const msg=(e&&e.message)||String(e)||''; tbody.innerHTML=`<tr><td colspan="6" class="muted">加载失败 Load failed: ${msg} <a href=\"javascript:location.reload()\">重试 Retry</a></td></tr>`; }
+        if(!data.ranks || data.ranks.length===0){
+          tbody.innerHTML = `<tr><td colspan="6" class="muted">${t('empty')}</td></tr>`;
+        }
+      } catch(e){
+        console.error('[board] load failed', e);
+        const msg = (e && e.message) || String(e) || '';
+        tbody.innerHTML = `<tr><td colspan="6" class="muted">加载失败 Load failed: ${msg} <a href=\"javascript:location.reload()\">重试 Retry</a></td></tr>`;
+      }
     }
     load();
   </script>
