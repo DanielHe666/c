@@ -49,7 +49,7 @@
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="5" class="muted">加载中 Loading…</td></tr>
+          <tr><td colspan="6" class="muted">加载中 Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -57,9 +57,9 @@
   <script>
     const i18n={
   zh:{ title:'C Code Golf · 每轮榜单', header:'C Code Golf · 每轮榜单', weekly:'C Code Golf', editor:'编辑器 Editor', refresh:'强制刷新',
-    desc:'数据来自 competition/data/prob-<n>.json。按字节数升序；同字节按提交先后。本轮积分：第一名得 D，其他得 round(D * 最小字节数/自身字节数)。', handle:'选手 Handle', bytes:'字节数 Bytes', time:'提交时间 Time', pts:'积分 Points', code:'代码 Code', loading:'加载中 Loading…', updated:'更新于', weekLabel:'Round <n> · 第 <n> 期', difficulty:'难度 Difficulty' },
+    desc:'数据来自 competition/data/prob-<n>.json。按字节数升序；同字节按提交先后。本轮积分：第一名得 D，其他得 round(D * 最小字节数/自身字节数)。', handle:'选手 Handle', bytes:'字节数 Bytes', time:'提交时间 Time', pts:'积分 Points', code:'代码 Code', loading:'加载中 Loading…', empty:'暂无提交 No submissions yet', updated:'更新于', weekLabel:'Round <n> · 第 <n> 期', difficulty:'难度 Difficulty' },
   en:{ title:'C Code Golf · Round Board', header:'C Code Golf · Round Board', weekly:'C Code Golf', editor:'Editor 编辑器', refresh:'Force Refresh',
-    desc:'Data from competition/data/prob-<n>.json. Sorted by bytes ascending; ties by earlier time. Round scoring: 1st gets D, others round(D * minBytes/bytes).', handle:'Handle 选手', bytes:'Bytes 字节数', time:'Time 提交时间', pts:'Points 积分', code:'Code 代码', loading:'Loading 加载中…', updated:'Updated at', weekLabel:'Round <n> · 第 <n> 期', difficulty:'Difficulty 难度' }
+    desc:'Data from competition/data/prob-<n>.json. Sorted by bytes ascending; ties by earlier time. Round scoring: 1st gets D, others round(D * minBytes/bytes).', handle:'Handle 选手', bytes:'Bytes 字节数', time:'Time 提交时间', pts:'Points 积分', code:'Code 代码', loading:'Loading 加载中…', empty:'No submissions yet 暂无提交', updated:'Updated at', weekLabel:'Round <n> · 第 <n> 期', difficulty:'Difficulty 难度' }
     };
     function getLang(){ try{return localStorage.getItem('ui_lang')||'zh';}catch(e){return 'zh';} }
     function setLang(l){ try{localStorage.setItem('ui_lang',l);}catch(e){} applyLang(); load(); }
@@ -123,7 +123,7 @@
           tr.innerHTML=`<td>${idx+1}</td><td>${row.handle}</td><td>${row.bytes}</td><td>${formatTime(row.commitTime)}</td><td>${row.points??'-'}</td><td>${codeCell}</td>`;
           tbody.appendChild(tr);
         });
-        if(!data.ranks||data.ranks.length===0){ tbody.innerHTML=`<tr><td colspan="6" class="muted">${t('loading')}</td></tr>`; }
+        if(!data.ranks||data.ranks.length===0){ tbody.innerHTML=`<tr><td colspan="6" class="muted">${t('empty')}</td></tr>`; }
       }catch(e){
         tbody.innerHTML=`<tr><td colspan="6" class="muted">${t('loading')}</td></tr>`;
       }
