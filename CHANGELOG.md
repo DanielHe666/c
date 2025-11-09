@@ -2,10 +2,20 @@
 ### Removed
 - 彻底移除 Serverless 一键提交方式：删除 `serverless/` 目录（Cloudflare Worker 示例与 README、wrangler.toml.example）。不再推荐或支持前端直接 POST 创建 PR 的流程，统一采用“Fork + 提交加密文件”常规路径。
 
+## [v1.3.20] - 2025-11-09
+### Changed
+- 移除编辑器与测试页内的“参赛/一键提交”通道，仅保留题目页面提交，减少路径混乱。
+
+### Technical
+- `index.html` 与 `test.html` 中 Share 模态框删去 contest 相关输入与按钮以及评测/提交逻辑。
+- 保留分享代码与可选包含标准输入/测试用例的功能。题目评测与提交统一在 `competition/submit.html` 流程。
+
+### Migration Notes
+- 若之前依赖测试页或首页编辑器弹窗进行参赛提交，需改为进入具体题目页进行提交。
+- 旧的加密上传逻辑保留在问题提交流程中，不再从编辑器弹窗触发。
+
 ### Changed
 - 清理文档残留：更新版本脚本与 Service Worker 版本号为 `v1.3.19` 触发缓存刷新；后续如需恢复可从历史提交恢复目录。
-
-### Notes
 - 前端仍保留加密与复制功能；`window.__CONFIG__.submitEndpoint` 空值表示禁用远程提交。后续若引入其它后端，可在新目录下重建，不再使用旧 `serverless/` 路径。
 
 # [1.3.10] - 2025-11-07
