@@ -1,14 +1,9 @@
 {
-  "repo": "",
+  "repo": "ChenyuHeee/c",
   "problemId": 1,
   "branch": "main",
-<<<<<<< HEAD:competition/data/week-1.json
-  "updatedAt": "2025-11-09T07:14:15.151Z",
-  "difficulty": 120,
-=======
-  "updatedAt": "2025-11-09T07:26:04.147Z",
+  "updatedAt": "2025-11-09T07:39:44.127Z",
   "difficulty": 150,
->>>>>>> 24d877a (rename):competition/data/prob-1.json
   "minBytes": 179,
   "ranks": [
     {
