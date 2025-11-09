@@ -8,120 +8,232 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     :root{ --bg:#0b0c0d; --panel:#0f1113; --muted:#9aa4ad; --text:#e6eef6; --accent:#48a0ff; --radius:12px; }
-    body{margin:0;background:var(--bg);color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial}
+    body{margin:0;background:var(--bg);color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;line-height:1.6}
     .wrap{max-width:1040px;margin:0 auto;padding:20px}
-    header{display:flex;align-items:center;gap:10px;justify-content:space-between}
+    header{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:20px}
     header h1{color:#fff;font-size:22px;margin:0;display:flex;align-items:center;gap:8px}
-    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
-    .card{background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:16px}
-    .card h3{margin:0 0 8px;color:#fff}
-    .card p{margin:0 0 10px;line-height:1.7}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:20px}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:18px;transition:border-color 0.2s}
+    .card:hover{border-color:rgba(255,255,255,0.16)}
+    .card h3{margin:0 0 10px;color:#fff;font-size:18px;display:flex;align-items:center;gap:8px}
+    .card p{margin:0 0 14px;font-size:14px;color:var(--muted)}
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    a.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);color:var(--text)}
+    a.btn,button.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);color:var(--text);background:rgba(255,255,255,0.03);font-size:13px;cursor:pointer;transition:all 0.2s}
+    a.btn:hover,button.btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12)}
     a.btn.primary{background:var(--accent);color:#071022;border:0}
-    .footer{margin-top:22px;display:flex;justify-content:space-between;align-items:center}
-    .light body{--bg:#f3f6fb;--panel:#fff;--muted:#4b5563;--text:#0b1220;--accent:#2563eb}
+    a.btn.primary:hover{background:#5eb0ff}
+    .footer{margin-top:30px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;font-size:13px}
+    .loading{text-align:center;padding:40px;color:var(--muted)}
+    .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(72,160,255,0.15);color:var(--accent)}
+    @media (max-width:720px){
+      header{flex-direction:column;align-items:flex-start;gap:12px}
+      .grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-  <h1 id="h1"><i class="fas fa-flag-checkered"></i> C Code Golf 挑战轮次</h1>
+      <h1><i class="fas fa-flag-checkered"></i> <span id="headerText">C Code Golf 挑战轮次</span></h1>
       <div class="row">
-        <a class="btn" href="../index.html"><i class="fas fa-code"></i> 编辑器 Editor</a>
-  <a class="btn" href="./rank/index.html"><i class="fas fa-ranking-star"></i> 天梯榜 Ladder</a>
-        <a class="btn" href="../submission_guide/problem-authoring.html" target="_blank" rel="noreferrer"><i class="fas fa-feather"></i> 投稿 Author</a>
+        <a class="btn" href="../index.html"><i class="fas fa-code"></i> <span id="editorText">编辑器</span></a>
+        <a class="btn" href="./rank/index.html"><i class="fas fa-ranking-star"></i> <span id="ladderText">天梯榜</span></a>
+        <a class="btn" href="../submission_guide/problem-authoring.html" target="_blank"><i class="fas fa-feather"></i> <span id="authorText">投稿</span></a>
         <button id="langBtn" class="btn"><i class="fas fa-globe"></i> EN</button>
       </div>
     </header>
 
     <div class="card">
-      <h3 id="introTitle">活动说明</h3>
-	<p id="introDesc">若干轮（Round）C 语言高尔夫题：按字节数排名。天梯积分：每轮难度积分 D；第一名得 D，其他得 round(D × 最小字节数/自身字节数)，随提交实时变化。</p>
-      <div class="row">
-	<a id="firstProblemBtn" class="btn primary" href="#"><i class="fas fa-calendar-week"></i> …</a>
-	<a id="firstRankBtn" class="btn" href="#"><i class="fas fa-trophy"></i> …</a>
-      </div>
+      <h3><i class="fas fa-info-circle"></i> <span id="introTitle">活动说明</span></h3>
+      <p id="introDesc">若干轮 C 语言代码高尔夫挑战题，按字节数排名。天梯积分：每轮难度积分 D；第一名得 D 分，其他选手得 round(D × 最小字节数 / 自身字节数)，随提交实时变化。</p>
     </div>
 
-    <div class="grid" id="weeks"></div>
+    <div id="problemsContainer">
+      <div class="loading"><i class="fas fa-spinner fa-spin"></i> <span id="loadingText">加载题目中...</span></div>
+    </div>
 
     <div class="footer">
       <div>By C. He from ZJU · Online C Compiler</div>
-      <a class="btn" href="../about.html"><i class="fas fa-circle-info"></i> 关于 About</a>
+      <a class="btn" href="../about.html"><i class="fas fa-circle-info"></i> <span id="aboutText">关于</span></a>
     </div>
   </div>
+
   <script>
-    const i18n={
-      zh:{ title:'C Code Golf · 挑战轮次', header:'C Code Golf 挑战轮次', editor:'编辑器 Editor', total:'天梯榜 Ladder',
-        introTitle:'活动说明', introDesc:'若干轮（Round）C 语言高尔夫题：按字节数排名。天梯积分：每轮难度积分 D；第一名得 D，其他得 round(D × 最小字节数/自身字节数)，随提交实时变化。',
-        week1:'打印指定图案（示例题）。', problem:'题目 Problem', rank:'榜单 Board'
+    // ============ 国际化 ============
+    const i18n = {
+      zh: {
+        title: 'C Code Golf · 挑战轮次',
+        header: 'C Code Golf 挑战轮次',
+        editor: '编辑器',
+        ladder: '天梯榜',
+        author: '投稿',
+        about: '关于',
+        introTitle: '活动说明',
+        introDesc: '若干轮 C 语言代码高尔夫挑战题，按字节数排名。天梯积分：每轮难度积分 D；第一名得 D 分，其他选手得 round(D × 最小字节数 / 自身字节数)，随提交实时变化。',
+        loading: '加载题目中...',
+        noProblems: '暂无题目',
+        noProblemsTip: '目前还没有可用的题目，请等待管理员添加或访问投稿指南了解如何出题。',
+        problemBtn: '题目',
+        rankBtn: '榜单',
+        round: '第 {{id}} 期'
       },
-      en:{ title:'C Code Golf · Rounds', header:'C Code Golf Rounds', editor:'Editor 编辑器', total:'Ladder 天梯榜',
-        introTitle:'Overview', introDesc:'Multiple C code golf rounds ranked by byte size. Ladder scoring: round difficulty D; 1st gets D, others round(D × minBytes/bytes); updates in real time.',
-        week1:'Print the specified pattern (sample).', problem:'Problem 题目', rank:'Board 榜单'
+      en: {
+        title: 'C Code Golf · Rounds',
+        header: 'C Code Golf Rounds',
+        editor: 'Editor',
+        ladder: 'Ladder',
+        author: 'Author',
+        about: 'About',
+        introTitle: 'Overview',
+        introDesc: 'Multiple C code golf challenge rounds ranked by byte size. Ladder scoring: round difficulty D; 1st place gets D points, others get round(D × minBytes / bytes); updates in real time with submissions.',
+        loading: 'Loading problems...',
+        noProblems: 'No Problems',
+        noProblemsTip: 'No problems are currently available. Please wait for the administrator to add them or visit the authoring guide to learn how to submit problems.',
+        problemBtn: 'Problem',
+        rankBtn: 'Board',
+        round: 'Round {{id}}'
       }
     };
-    function getLang(){ try{return localStorage.getItem('ui_lang')||'zh';}catch(e){return 'zh';} }
-  function setLang(l){ try{localStorage.setItem('ui_lang',l);}catch(e){} applyLang(); renderProblems(); }
-    function t(k){ const L=getLang(); return (i18n[L]&&i18n[L][k])||i18n.zh[k]||k; }
-    function applyLang(){
-      document.getElementById('title').textContent=t('title');
-      document.getElementById('h1').innerHTML='<i class="fas fa-flag-checkered"></i> '+t('header');
-      const rows=document.querySelectorAll('a.btn');
-      // 前两个固定按钮
-      if(rows[0]) rows[0].innerHTML='<i class="fas fa-code"></i> '+t('editor');
-  if(rows[1]) rows[1].innerHTML='<i class="fas fa-ranking-star"></i> '+t('total');
-  // 第三个按钮是投稿指南，保持双语并行显示
-      document.getElementById('introTitle').textContent=t('introTitle');
-      document.getElementById('introDesc').textContent=t('introDesc');
-      const langBtn=document.getElementById('langBtn'); langBtn.innerHTML='<i class="fas fa-globe"></i> '+(getLang()==='zh'?'EN':'中');
-    }
-    document.getElementById('langBtn').addEventListener('click',()=>setLang(getLang()==='zh'?'en':'zh'));
-    applyLang();
 
-    async function renderProblems(){
-      const container = document.getElementById('weeks');
-      if(!container) return;
-      container.innerHTML='';
-      let list=[];
-      try{
-        const res=await fetch('./problems.json?fresh='+(Date.now()),{cache:'no-store'});
-        if(res.ok) list=await res.json();
-      }catch(e){}
-      if(!Array.isArray(list)){
-        list=[];
+    // ============ 语言管理 ============
+    function getLang() {
+      try {
+        return localStorage.getItem('ui_lang') || 'zh';
+      } catch (e) {
+        return 'zh';
       }
-      if (list.length === 0) {
-        container.innerHTML = '<p>暂无题目，请等待管理员添加。No problems available yet, please wait for the administrator to add them.</p>';
-        const firstProblemBtn = document.getElementById('firstProblemBtn');
-        const firstRankBtn = document.getElementById('firstRankBtn');
-        if (firstProblemBtn) firstProblemBtn.style.display = 'none';
-        if (firstRankBtn) firstRankBtn.style.display = 'none';
+    }
+
+    function setLang(lang) {
+      try {
+        localStorage.setItem('ui_lang', lang);
+      } catch (e) {}
+      applyLang();
+      renderProblems(); // 重新渲染题目以应用新语言
+    }
+
+    function t(key, params = {}) {
+      const lang = getLang();
+      let text = i18n[lang]?.[key] || i18n.zh[key] || key;
+      // 简单的模板替换
+      Object.keys(params).forEach(k => {
+        text = text.replace(new RegExp(`{{${k}}}`, 'g'), params[k]);
+      });
+      return text;
+    }
+
+    function applyLang() {
+      document.getElementById('title').textContent = t('title');
+      document.getElementById('headerText').textContent = t('header');
+      document.getElementById('editorText').textContent = t('editor');
+      document.getElementById('ladderText').textContent = t('ladder');
+      document.getElementById('authorText').textContent = t('author');
+      document.getElementById('aboutText').textContent = t('about');
+      document.getElementById('introTitle').textContent = t('introTitle');
+      document.getElementById('introDesc').textContent = t('introDesc');
+      document.getElementById('loadingText').textContent = t('loading');
+      
+      const langBtn = document.getElementById('langBtn');
+      langBtn.innerHTML = `<i class="fas fa-globe"></i> ${getLang() === 'zh' ? 'EN' : '中'}`;
+    }
+
+    // ============ 题目渲染 ============
+    async function renderProblems() {
+      const container = document.getElementById('problemsContainer');
+      if (!container) return;
+
+      // 显示加载状态
+      container.innerHTML = `<div class="loading"><i class="fas fa-spinner fa-spin"></i> <span>${t('loading')}</span></div>`;
+
+      let problems = [];
+      
+      try {
+        const response = await fetch('./problems.json?t=' + Date.now(), {
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          problems = await response.json();
+          console.log('[DEBUG] 成功加载 problems.json:', problems);
+        } else {
+          console.error('[ERROR] 加载 problems.json 失败:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('[ERROR] 获取 problems.json 时出错:', error);
+      }
+
+      // 检查数据有效性
+      if (!Array.isArray(problems) || problems.length === 0) {
+        console.warn('[WARN] problems.json 为空或格式不正确');
+        container.innerHTML = `
+          <div class="card" style="text-align:center;padding:40px">
+            <h3 style="justify-content:center"><i class="fas fa-inbox"></i> ${t('noProblems')}</h3>
+            <p>${t('noProblemsTip')}</p>
+          </div>
+        `;
         return;
       }
-      const L=getLang();
-      const first=list[0];
-      const fp=document.getElementById('firstProblemBtn');
-      const fr=document.getElementById('firstRankBtn');
-      const firstName=L==='zh'?(first.short_desc_zh||first.title||('Round '+first.id)):(first.short_desc_en||first.title||('Round '+first.id));
-      if(fp){ fp.href=`./${first.id}.html`; fp.innerHTML=`<i class="fas fa-calendar-week"></i> ${first.id}. ${firstName}`; }
-      if(fr){ fr.href=`./rank/week.html?week=${first.id}`; fr.innerHTML=`<i class="fas fa-trophy"></i> ${L==='zh'?('第 '+first.id+' 期榜单'):('Round '+first.id+' Board')}`; }
-      list.forEach(p=>{
-        const name=L==='zh'?(p.title||('Round '+p.id)):(p.title||('Round '+p.id));
-        const desc=L==='zh'?(p.short_desc_zh||''):(p.short_desc_en||'');
-        const d=(typeof p.difficulty==='number' || (typeof p.difficulty === 'string' && !isNaN(p.difficulty))) ? Number(p.difficulty) : undefined;
-        const badge=d!=null?`<span style="font-weight:400;color:#9aa4ad;font-size:12px">D=${d}</span>`:'';
-        const card=document.createElement('div'); card.className='card';
-        card.innerHTML=`<h3>${p.id}. ${name} ${badge}</h3>
-          <p>${desc}</p>
-          <div class='row'>
-            <a class='btn' href='./${p.id}.html'><i class='fas fa-book-open'></i> ${t('problem')}</a>
-            <a class='btn' href='./rank/week.html?week=${p.id}'><i class='fas fa-medal'></i> ${t('rank')}</a>
-          </div>`;
-        container.appendChild(card);
+
+      // 渲染题目网格
+      const lang = getLang();
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      problems.forEach(problem => {
+        console.log('[DEBUG] 渲染题目:', problem);
+        
+        // 提取题目信息
+        const id = problem.id ?? problem.number ?? 0;
+        const title = problem.title || t('round', { id });
+        const shortDesc = lang === 'zh' 
+          ? (problem.short_desc_zh || problem.short || '') 
+          : (problem.short_desc_en || problem.short || '');
+        
+        // 处理难度值
+        let difficulty = null;
+        if (typeof problem.difficulty === 'number') {
+          difficulty = problem.difficulty;
+        } else if (typeof problem.difficulty === 'string' && problem.difficulty.trim() !== '') {
+          const parsed = parseInt(problem.difficulty, 10);
+          if (!isNaN(parsed)) {
+            difficulty = parsed;
+          }
+        }
+
+        // 创建题目卡片
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>
+            <span>${id}. ${title}</span>
+            ${difficulty !== null ? `<span class="badge">D=${difficulty}</span>` : ''}
+          </h3>
+          <p>${shortDesc}</p>
+          <div class="row">
+            <a class="btn primary" href="./${id}.html">
+              <i class="fas fa-book-open"></i> ${t('problemBtn')}
+            </a>
+            <a class="btn" href="./rank/week.html?week=${id}">
+              <i class="fas fa-medal"></i> ${t('rankBtn')}
+            </a>
+          </div>
+        `;
+        
+        grid.appendChild(card);
       });
+
+      container.innerHTML = '';
+      container.appendChild(grid);
+      
+      console.log('[DEBUG] 题目渲染完成，共', problems.length, '题');
     }
+
+    // ============ 初始化 ============
+    document.getElementById('langBtn').addEventListener('click', () => {
+      setLang(getLang() === 'zh' ? 'en' : 'zh');
+    });
+
+    applyLang();
     renderProblems();
   </script>
 </body>
