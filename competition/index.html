@@ -3,238 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title id="title">C Code Golf · 挑战轮次</title>
-  <meta name="theme-color" content="#0b0c0d" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <title>C Code Golf 已迁移</title>
+  <meta http-equiv="refresh" content="0; url=http://47.99.243.62/" />
+  <meta name="robots" content="noindex" />
   <style>
-    :root{ --bg:#0b0c0d; --panel:#0f1113; --muted:#9aa4ad; --text:#e6eef6; --accent:#48a0ff; --radius:12px; }
-    body{margin:0;background:var(--bg);color:var(--muted);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;line-height:1.6}
-    .wrap{max-width:1040px;margin:0 auto;padding:20px}
-    header{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:20px}
-    header h1{color:#fff;font-size:22px;margin:0;display:flex;align-items:center;gap:8px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:20px}
-    .card{background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:18px;transition:border-color 0.2s}
-    .card:hover{border-color:rgba(255,255,255,0.16)}
-    .card h3{margin:0 0 10px;color:#fff;font-size:18px;display:flex;align-items:center;gap:8px}
-    .card p{margin:0 0 14px;font-size:14px;color:var(--muted)}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    a.btn,button.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);color:var(--text);background:rgba(255,255,255,0.03);font-size:13px;cursor:pointer;transition:all 0.2s}
-    a.btn:hover,button.btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12)}
-    a.btn.primary{background:var(--accent);color:#071022;border:0}
-    a.btn.primary:hover{background:#5eb0ff}
-    .footer{margin-top:30px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;font-size:13px}
-    .loading{text-align:center;padding:40px;color:var(--muted)}
-    .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(72,160,255,0.15);color:var(--accent)}
-    @media (max-width:720px){
-      header{flex-direction:column;align-items:flex-start;gap:12px}
-      .grid{grid-template-columns:1fr}
-    }
+    body{margin:0;display:flex;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;background:#0b0c0d;color:#dfefff;align-items:center;justify-content:center;padding:24px;text-align:center}
+    main{max-width:520px}
+    a{color:#48a0ff;text-decoration:none}
+    a:hover{text-decoration:underline}
   </style>
+  <script>
+    // 直接跳转到新的赛事服务
+    window.location.replace('http://47.99.243.62/');
+  </script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1><i class="fas fa-flag-checkered"></i> <span id="headerText">C Code Golf 挑战轮次</span></h1>
-      <div class="row">
-        <a class="btn" href="../index.html"><i class="fas fa-code"></i> <span id="editorText">编辑器</span></a>
-        <a class="btn" href="./rank/index.html"><i class="fas fa-ranking-star"></i> <span id="ladderText">天梯榜</span></a>
-        <a class="btn" href="../submission_guide/problem-authoring.html" target="_blank"><i class="fas fa-feather"></i> <span id="authorText">投稿</span></a>
-        <button id="langBtn" class="btn"><i class="fas fa-globe"></i> EN</button>
-      </div>
-    </header>
-
-    <div class="card">
-      <h3><i class="fas fa-info-circle"></i> <span id="introTitle">活动说明</span></h3>
-      <p id="introDesc">若干轮 C 语言代码高尔夫挑战题，按字节数排名。天梯积分：每轮难度积分 D；第一名得 D 分，其他选手得 round(D × 最小字节数 / 自身字节数)，随提交实时变化。</p>
-    </div>
-
-    <div id="problemsContainer">
-      <div class="loading"><i class="fas fa-spinner fa-spin"></i> <span id="loadingText">加载题目中...</span></div>
-    </div>
-
-    <div class="footer">
-      <div>By C. He from ZJU · Online C Compiler</div>
-      <a class="btn" href="../about.html"><i class="fas fa-circle-info"></i> <span id="aboutText">关于</span></a>
-    </div>
-  </div>
-
-  <script>
-    // ============ 国际化 ============
-    const i18n = {
-      zh: {
-        title: 'C Code Golf · 挑战轮次',
-        header: 'C Code Golf 挑战轮次',
-        editor: '编辑器',
-        ladder: '天梯榜',
-        author: '投稿',
-        about: '关于',
-        introTitle: '活动说明',
-        introDesc: '若干轮 C 语言代码高尔夫挑战题，按字节数排名。天梯积分：每轮难度积分 D；第一名得 D 分，其他选手得 round(D × 最小字节数 / 自身字节数)，随提交实时变化。',
-        loading: '加载题目中...',
-        noProblems: '暂无题目',
-        noProblemsTip: '目前还没有可用的题目，请等待管理员添加或访问投稿指南了解如何出题。',
-        problemBtn: '题目',
-        rankBtn: '榜单',
-        round: '第 {{id}} 期'
-      },
-      en: {
-        title: 'C Code Golf · Rounds',
-        header: 'C Code Golf Rounds',
-        editor: 'Editor',
-        ladder: 'Ladder',
-        author: 'Author',
-        about: 'About',
-        introTitle: 'Overview',
-        introDesc: 'Multiple C code golf challenge rounds ranked by byte size. Ladder scoring: round difficulty D; 1st place gets D points, others get round(D × minBytes / bytes); updates in real time with submissions.',
-        loading: 'Loading problems...',
-        noProblems: 'No Problems',
-        noProblemsTip: 'No problems are currently available. Please wait for the administrator to add them or visit the authoring guide to learn how to submit problems.',
-        problemBtn: 'Problem',
-        rankBtn: 'Board',
-        round: 'Round {{id}}'
-      }
-    };
-
-    // ============ 语言管理 ============
-    function getLang() {
-      try {
-        return localStorage.getItem('ui_lang') || 'zh';
-      } catch (e) {
-        return 'zh';
-      }
-    }
-
-    function setLang(lang) {
-      try {
-        localStorage.setItem('ui_lang', lang);
-      } catch (e) {}
-      applyLang();
-      renderProblems(); // 重新渲染题目以应用新语言
-    }
-
-    function t(key, params = {}) {
-      const lang = getLang();
-      let text = i18n[lang]?.[key] || i18n.zh[key] || key;
-      // 简单的模板替换
-      Object.keys(params).forEach(k => {
-        text = text.replace(new RegExp(`{{${k}}}`, 'g'), params[k]);
-      });
-      return text;
-    }
-
-    function applyLang() {
-      document.getElementById('title').textContent = t('title');
-      document.getElementById('headerText').textContent = t('header');
-      document.getElementById('editorText').textContent = t('editor');
-      document.getElementById('ladderText').textContent = t('ladder');
-      document.getElementById('authorText').textContent = t('author');
-      document.getElementById('aboutText').textContent = t('about');
-      document.getElementById('introTitle').textContent = t('introTitle');
-      document.getElementById('introDesc').textContent = t('introDesc');
-      document.getElementById('loadingText').textContent = t('loading');
-      
-      const langBtn = document.getElementById('langBtn');
-      langBtn.innerHTML = `<i class="fas fa-globe"></i> ${getLang() === 'zh' ? 'EN' : '中'}`;
-    }
-
-    // ============ 题目渲染 ============
-    async function renderProblems() {
-      const container = document.getElementById('problemsContainer');
-      if (!container) return;
-
-      // 显示加载状态
-      container.innerHTML = `<div class="loading"><i class="fas fa-spinner fa-spin"></i> <span>${t('loading')}</span></div>`;
-
-      let problems = [];
-      
-      try {
-        const response = await fetch('./problems.json?t=' + Date.now(), {
-          cache: 'no-store'
-        });
-        
-        if (response.ok) {
-          problems = await response.json();
-          console.log('[DEBUG] 成功加载 problems.json:', problems);
-        } else {
-          console.error('[ERROR] 加载 problems.json 失败:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('[ERROR] 获取 problems.json 时出错:', error);
-      }
-
-      // 检查数据有效性
-      if (!Array.isArray(problems) || problems.length === 0) {
-        console.warn('[WARN] problems.json 为空或格式不正确');
-        container.innerHTML = `
-          <div class="card" style="text-align:center;padding:40px">
-            <h3 style="justify-content:center"><i class="fas fa-inbox"></i> ${t('noProblems')}</h3>
-            <p>${t('noProblemsTip')}</p>
-          </div>
-        `;
-        return;
-      }
-
-      // 渲染题目网格
-      const lang = getLang();
-      const grid = document.createElement('div');
-      grid.className = 'grid';
-
-      problems.forEach(problem => {
-        console.log('[DEBUG] 渲染题目:', problem);
-        
-        // 提取题目信息
-        const id = problem.id ?? problem.number ?? 0;
-        const title = problem.title || t('round', { id });
-        const shortDesc = lang === 'zh' 
-          ? (problem.short_desc_zh || problem.short || '') 
-          : (problem.short_desc_en || problem.short || '');
-        
-        // 处理难度值
-        let difficulty = null;
-        if (typeof problem.difficulty === 'number') {
-          difficulty = problem.difficulty;
-        } else if (typeof problem.difficulty === 'string' && problem.difficulty.trim() !== '') {
-          const parsed = parseInt(problem.difficulty, 10);
-          if (!isNaN(parsed)) {
-            difficulty = parsed;
-          }
-        }
-
-        // 创建题目卡片
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <h3>
-            <span>${id}. ${title}</span>
-            ${difficulty !== null ? `<span class="badge">D=${difficulty}</span>` : ''}
-          </h3>
-          <p>${shortDesc}</p>
-          <div class="row">
-            <a class="btn primary" href="./${id}.html">
-              <i class="fas fa-book-open"></i> ${t('problemBtn')}
-            </a>
-            <a class="btn" href="./rank/board.html?id=${id}">
-              <i class="fas fa-medal"></i> ${t('rankBtn')}
-            </a>
-          </div>
-        `;
-        
-        grid.appendChild(card);
-      });
-
-      container.innerHTML = '';
-      container.appendChild(grid);
-      
-      console.log('[DEBUG] 题目渲染完成，共', problems.length, '题');
-    }
-
-    // ============ 初始化 ============
-    document.getElementById('langBtn').addEventListener('click', () => {
-      setLang(getLang() === 'zh' ? 'en' : 'zh');
-    });
-
-    applyLang();
-    renderProblems();
-  </script>
+  <main>
+    <h1>C Code Golf 已迁移</h1>
+    <p>赛事服务已迁移至 <a href="http://47.99.243.62/">http://47.99.243.62/</a>，请更新书签或稍候我们将自动跳转。</p>
+    <p>The competition service now lives at <a href="http://47.99.243.62/">http://47.99.243.62/</a>. You will be redirected shortly.</p>
+  </main>
 </body>
 </html>
