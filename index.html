@@ -370,30 +370,15 @@ int main() {
                 stdoutEl.textContent = out.replace(/\n+$/,'');
                 return;
             } catch (e) {
-                console.warn('Wandbox 调用失败：', e);
-                stdoutEl.textContent = 'Wandbox 不可用，回退到本地模拟...';
+                // 显示真实的错误信息，而不是回退到本地模拟
+                console.error('运行失败（Wandbox/网络/编译）：', e);
+                const msg = (e && e.message) ? e.message : String(e);
+                stdoutEl.textContent = '运行失败：' + msg;
+                return;
             }
-            simulateRun(code, stdin);
         }
 
-        // 本地回退：简单模拟 scanf/printf 行为（仅作演示）
-        function simulateRun(code, input) {
-            stdoutEl.textContent = '本地模拟运行...';
-            setTimeout(() => {
-                // 保留模拟结果原始前导空格：不使用 trim
-                const sim = simulateRunOutput(code, input);
-                stdoutEl.textContent = sim;
-            }, 300);
-        }
-        function simulateRunOutput(code, input){
-            if (/scanf\s*\(/.test(code) && (!input || input.trim() === '')) return '错误：程序需要输入但未提供 stdin。';
-            if (!input || input.trim() === '') return '提示：请正确输入';
-            const parts = input.split(/\s+/).map(s => parseInt(s, 10));
-            if (parts.length >= 2 && parts.every(n => Number.isFinite(n))) {
-                const [a, b] = parts; return `两数之和为：${a + b}`;
-            }
-            return '错误：输入格式不正确';
-        }
+        // 取消本地模拟运行：在无法使用远端编译器时直接向用户展示真实错误信息。
 
         // 切换主题（轻/暗），默认暗黑。我们通过 body 的 .light-theme 类切换 CSS 变量
         // 主题持久化到 localStorage: 'editorTheme' = 'dark' | 'light'
@@ -1104,8 +1089,15 @@ int main() {
         function normalize(s){ return (s||'').replace(/\r\n/g,'\n').trim(); }
         async function runForTest(code, input){
             if (!navigator.onLine){ return { mode:'offline', output: '' }; }
-            try { const r = await tryWandboxCompile(code, input); const out=((r.stdout||'')+((r.stderr&&r.stderr.trim())?'\n[stderr]\n'+r.stderr:'' )).trim(); return { mode:'wandbox', output: out }; }
-            catch(e){ return { mode:'simulate', output: simulateRunOutput(code, input) }; }
+            try {
+                const r = await tryWandboxCompile(code, input);
+                const out = ((r.stdout||'') + ((r.stderr && r.stderr.trim()) ? '\n[stderr]\n'+r.stderr : '')).trim();
+                return { mode:'wandbox', output: out };
+            } catch (e) {
+                // 返回真实的错误信息给测试用例界面，不再使用本地模拟
+                const msg = (e && e.message) ? e.message : String(e);
+                return { mode:'error', output: '运行失败：' + msg };
+            }
         }
         function renderCases(){
             const list = document.getElementById('casesList'); if(!list) return;
