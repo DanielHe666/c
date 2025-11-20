@@ -119,6 +119,7 @@
             .main{flex-direction:column}
             #sidebarToggle{display:none !important}
             #mobilePanelBtn{display:inline-flex}
+            .sidebar.collapsed{display:none !important;height:0;overflow:hidden;padding:0;border-top:0;opacity:0;pointer-events:none}
         }
         @media (max-width:640px){ /* 手机优化：工具栏换行，字号压缩 */
             .btn{padding:6px 8px;font-size:11px}
@@ -851,6 +852,7 @@ int main() {
             // 折叠侧栏时不改变编辑器宽度（编辑器始终填满宽度），仅触发布局
             try { editorWrap && editorWrap.classList.add('full'); } catch (e) {}
             setTimeout(() => { try { window.editor && window.editor.layout(); } catch (e) {} }, 320);
+            if (mobilePanelBtn) mobilePanelBtn.innerHTML = '<i class="fas fa-sliders"></i> ' + t('io_toggle');
             autoCollapsedForMobile = false;
         });
         sidebarToggle.addEventListener('click', () => {
@@ -866,6 +868,7 @@ int main() {
             // 立即触发一次布局以快速响应，稍后 transitionend 会触发最终布局
             try { window.editor && window.editor.layout(); } catch (e) {}
             setTimeout(() => { try { window.editor && window.editor.layout(); } catch (e) {} }, 180);
+            if (mobilePanelBtn) mobilePanelBtn.innerHTML = '<i class="fas fa-sliders"></i> ' + t('hide_io');
             autoCollapsedForMobile = false;
         });
 
