@@ -1,6 +1,8 @@
 # Online C Compiler
 
-[![Deploy Pages Status](https://github.com/ChenyuHeee/c/actions/workflows/deploy-pages.yml/badge.svg?branch=main)](https://github.com/ChenyuHeee/c/actions/workflows/deploy-pages.yml)
+[![Stars](https://img.shields.io/github/stars/ChenyuHeee/c?style=flat-square&logo=github)](https://github.com/ChenyuHeee/c/stargazers)
+[![Contributors](https://img.shields.io/github/contributors/ChenyuHeee/c?style=flat-square)](https://github.com/ChenyuHeee/c/graphs/contributors)
+[![English README](https://img.shields.io/badge/README-English-blue?style=flat-square)](README.en.md)
 
 简洁、现代的在线 C 语言编译环境，直接在浏览器中即可编写、格式化与运行代码。项目通过 GitHub Pages 自动化部署，适合快速演示与教学。
 
@@ -28,16 +30,4 @@
 
 ---
 
-## English (Optional)
-
-A lightweight, browser-based C compiler with Monaco editor, theme switching, and Uncrustify WASM formatting. Deployed automatically via GitHub Pages.
-
-**Live demo:** https://chenyuheee.github.io/c
-
-### Quick start
-```bash
-git clone https://github.com/ChenyuHeee/c.git
-cd c
-npm install   # optional, for helper scripts
-npx serve .   # preview locally with any static server
-```
+> Looking for English? Click the "English README" badge above to read the full English documentation.
